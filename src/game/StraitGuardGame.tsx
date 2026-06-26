@@ -231,18 +231,53 @@ export default function StraitGuardGame() {
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-slate-950/70 backdrop-blur-sm p-6">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 p-6
+      bg-[radial-gradient(ellipse_at_center,rgba(8,20,32,.6),rgba(2,6,12,.92))] backdrop-blur-md">
       {children}
     </div>
   );
 }
 
-function HpBar({ label, value, color }: { label: string; value: number; color: string }) {
+function SgTitle({ children, accent = "silver" }: { children: React.ReactNode; accent?: "silver" | "cyan" | "red" }) {
+  const grad =
+    accent === "cyan"
+      ? "linear-gradient(180deg,#dffaff 0%,#7fd9ff 45%,#1f7aa3 55%,#bfeaff 100%)"
+      : accent === "red"
+      ? "linear-gradient(180deg,#ffd6d6 0%,#ff7878 45%,#8a1a1a 55%,#ffb8b8 100%)"
+      : "linear-gradient(180deg,#f4f6fa 0%,#b9c0cc 45%,#5a6470 55%,#e0e5ec 100%)";
   return (
-    <div className="w-44">
-      <div className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">{label}</div>
-      <div className="h-2.5 w-full rounded-full bg-black/50 overflow-hidden border border-white/10">
-        <div className={`h-full ${color} transition-[width] duration-150`} style={{ width: `${Math.max(0, value) * 100}%` }} />
+    <h2
+      className="text-3xl md:text-4xl font-black tracking-[0.2em] uppercase"
+      style={{
+        backgroundImage: grad,
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        textShadow: "0 0 24px rgba(80,200,255,.25)",
+        filter: "drop-shadow(0 2px 0 rgba(0,0,0,.6))",
+      }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function HpBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="w-48">
+      <div className="flex justify-between text-[10px] tracking-[0.25em] text-cyan-100/80 mb-0.5 font-bold">
+        <span>{label}</span>
+        <span className="font-mono opacity-70">{String(Math.floor(value * 100)).padStart(3, "0")}</span>
+      </div>
+      <div className="h-2 w-full bg-black/70 overflow-hidden border border-cyan-400/30 shadow-[inset_0_0_6px_rgba(0,0,0,0.8)]">
+        <div
+          className="h-full transition-[width] duration-150"
+          style={{
+            width: `${Math.max(0, value) * 100}%`,
+            background: "linear-gradient(90deg,#ffb648 0%,#ff6a1f 60%,#ff2e2e 100%)",
+            boxShadow: "0 0 8px rgba(255,140,40,.6)",
+          }}
+        />
       </div>
     </div>
   );
