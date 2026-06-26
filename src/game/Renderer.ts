@@ -1,13 +1,16 @@
-import type { GameManager } from "./straitguard";
+import type { GameManager, EnemyController } from "./straitguard";
 
 export function render(ctx: CanvasRenderingContext2D, g: GameManager) {
   const { width: W, height: H } = g;
 
   // water
-  ctx.fillStyle = "#0b3a5b";
+  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  grd.addColorStop(0, "#062a44");
+  grd.addColorStop(1, "#0d4666");
+  ctx.fillStyle = grd;
   ctx.fillRect(0, 0, W, H);
 
-  // animated water stripes (parallax from cameraY)
+  // animated water stripes
   ctx.fillStyle = "rgba(255,255,255,0.05)";
   const stripeH = 22;
   const offset = (g.cameraY * 0.6) % stripeH;
@@ -15,64 +18,207 @@ export function render(ctx: CanvasRenderingContext2D, g: GameManager) {
     ctx.fillRect(120, y, W - 240, stripeH);
   }
 
-  // land left/right
+  // land left/right (rocky cliffs)
   const landW = 110;
-  ctx.fillStyle = "#3b6a2a";
+  ctx.fillStyle = "#3b2a1c";
   ctx.fillRect(0, 0, landW, H);
   ctx.fillRect(W - landW, 0, landW, H);
-  ctx.fillStyle = "#264a1a";
-  ctx.fillRect(landW - 8, 0, 8, H);
-  ctx.fillRect(W - landW, 0, 8, H);
+  ctx.fillStyle = "#5a4530";
+  // jagged edge
+  for (let y = 0; y < H; y += 30) {
+    const jitterL = ((Math.sin((y + g.cameraY) * 0.05) + 1) / 2) * 14;
+    const jitterR = ((Math.cos((y + g.cameraY) * 0.05) + 1) / 2) * 14;
+    ctx.fillRect(landW - jitterL, y, jitterL, 30);
+    ctx.fillRect(W - landW, y, jitterR, 30);
+  }
 
-  // progress finish line indicator at top once near end
+  // progress bar at top
   const prog = g.progress();
-  ctx.fillStyle = `rgba(255,220,80,${0.2 + prog * 0.6})`;
-  ctx.fillRect(landW, 20, W - landW * 2, 4);
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(landW, 14, W - landW * 2, 4);
+  ctx.fillStyle = `rgba(255,200,60,0.95)`;
+  ctx.fillRect(landW, 14, (W - landW * 2) * prog, 4);
 
-  // cargo
-  drawShip(ctx, g.cargo.pos.x, g.cargo.pos.y, g.cargo.size.x, g.cargo.size.y, "#c9a24a", "#5a3a10");
-  drawHpBar(ctx, g.cargo.pos.x, g.cargo.pos.y - g.cargo.size.y / 2 - 10, 60, g.cargo.hp / g.cargo.maxHp, "#f0c040");
+  // wake behind cargo
+  drawWake(ctx, g.cargo.pos.x, g.cargo.pos.y + g.cargo.size.y / 2, g.cargo.size.x * 0.8, 80);
+
+  // cargo (container ship, top-down)
+  drawCargoShip(ctx, g.cargo.pos.x, g.cargo.pos.y, g.cargo.size.x, g.cargo.size.y);
+  drawHpBar(ctx, g.cargo.pos.x, g.cargo.pos.y - g.cargo.size.y / 2 - 12, 70, g.cargo.hp / g.cargo.maxHp, "CARGO");
 
   // enemies
   for (const e of g.enemies) {
-    drawShip(ctx, e.pos.x, e.pos.y, e.size.x, e.size.y, e.color, "#2a0a0a");
-    drawHpBar(ctx, e.pos.x, e.pos.y - e.size.y / 2 - 8, e.size.x + 6, e.hp / e.maxHp, "#ff6060");
+    drawEnemyBoat(ctx, e);
+    drawHpBar(ctx, e.pos.x, e.pos.y - e.size.y / 2 - 10, e.size.x + 14, e.hp / e.maxHp);
   }
 
-  // player
-  drawShip(ctx, g.player.pos.x, g.player.pos.y, g.player.size.x, g.player.size.y, "#4ad29a", "#0a2a1a");
+  // player frigate
+  drawWake(ctx, g.player.pos.x, g.player.pos.y + g.player.size.y / 2, g.player.size.x * 0.7, 50);
+  drawFrigate(ctx, g.player.pos.x, g.player.pos.y, g.player.size.x, g.player.size.y);
+  drawHpBar(ctx, g.player.pos.x, g.player.pos.y - g.player.size.y / 2 - 12, 60, g.player.hp / g.player.maxHp, "FRIGATE");
 
   // bullets
   for (const b of g.bullets) {
     ctx.beginPath();
-    ctx.fillStyle = b.from === "player" ? "#bff7d8" : "#ffd060";
+    ctx.fillStyle = b.from === "player" ? "#e8fff0" : "#ffd060";
+    ctx.shadowColor = b.from === "player" ? "#7df2b0" : "#ffae3a";
+    ctx.shadowBlur = 8;
     ctx.arc(b.pos.x, b.pos.y, b.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
-function drawShip(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string, stroke: string) {
-  ctx.fillStyle = fill;
-  ctx.strokeStyle = stroke;
+function drawWake(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, "rgba(255,255,255,0.45)");
+  g.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, y);
+  ctx.lineTo(x + w / 2, y);
+  ctx.lineTo(x + w * 0.9, y + h);
+  ctx.lineTo(x - w * 0.9, y + h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Top-down container cargo ship — gray hull, bow at top, rows of colored containers
+function drawCargoShip(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+  const x = cx - w / 2, y = cy - h / 2;
+  // hull (pointed bow on top, square stern on bottom — cargo moves UP)
+  ctx.fillStyle = "#7a1f1a";
+  ctx.strokeStyle = "#1a0a08";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  // rounded rect-ish hull
-  const rx = x - w / 2, ry = y - h / 2;
-  ctx.moveTo(rx + w * 0.15, ry);
-  ctx.lineTo(rx + w * 0.85, ry);
-  ctx.lineTo(rx + w, ry + h * 0.5);
-  ctx.lineTo(rx + w * 0.85, ry + h);
-  ctx.lineTo(rx + w * 0.15, ry + h);
-  ctx.lineTo(rx, ry + h * 0.5);
+  ctx.moveTo(cx, y);                 // bow tip
+  ctx.lineTo(x + w, y + h * 0.18);
+  ctx.lineTo(x + w, y + h * 0.95);
+  ctx.quadraticCurveTo(cx, y + h, x, y + h * 0.95);
+  ctx.lineTo(x, y + h * 0.18);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+
+  // deck
+  ctx.fillStyle = "#d6cfb8";
+  ctx.fillRect(x + w * 0.16, y + h * 0.12, w * 0.68, h * 0.78);
+
+  // bow superstructure (white bridge near front)
+  ctx.fillStyle = "#f3f1ea";
+  ctx.fillRect(cx - w * 0.18, y + h * 0.08, w * 0.36, h * 0.1);
+  ctx.strokeStyle = "#444";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - w * 0.18, y + h * 0.08, w * 0.36, h * 0.1);
+
+  // containers grid
+  const colors = ["#c1392b", "#2c6fb8", "#e08a2a", "#3b8a4f", "#b03b6e", "#d9c24a"];
+  const cols = 4, rows = 7;
+  const gx = x + w * 0.2, gy = y + h * 0.22;
+  const cw = (w * 0.6) / cols, chh = (h * 0.62) / rows;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const idx = (r * 7 + c * 3) % colors.length;
+      ctx.fillStyle = colors[idx];
+      ctx.fillRect(gx + c * cw + 1, gy + r * chh + 1, cw - 2, chh - 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.strokeRect(gx + c * cw + 1, gy + r * chh + 1, cw - 2, chh - 2);
+    }
+  }
+
+  // stern mast
+  ctx.fillStyle = "#222";
+  ctx.fillRect(cx - 1, y + h * 0.86, 2, h * 0.08);
 }
 
-function drawHpBar(ctx: CanvasRenderingContext2D, cx: number, y: number, w: number, frac: number, color: string) {
-  const h = 5;
-  ctx.fillStyle = "rgba(0,0,0,0.5)";
-  ctx.fillRect(cx - w / 2, y, w, h);
-  ctx.fillStyle = color;
-  ctx.fillRect(cx - w / 2, y, w * Math.max(0, frac), h);
+// Top-down naval frigate — gray hull, pointed bow, turret + bridge
+function drawFrigate(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+  const x = cx - w / 2, y = cy - h / 2;
+  // hull
+  ctx.fillStyle = "#4a5560";
+  ctx.strokeStyle = "#0d1115";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, y);                       // bow tip
+  ctx.lineTo(x + w * 0.92, y + h * 0.22);
+  ctx.lineTo(x + w * 0.92, y + h * 0.92);
+  ctx.lineTo(x + w * 0.08, y + h * 0.92);
+  ctx.lineTo(x + w * 0.08, y + h * 0.22);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // deck
+  ctx.fillStyle = "#6b7884";
+  ctx.fillRect(x + w * 0.18, y + h * 0.18, w * 0.64, h * 0.7);
+
+  // forward turret (front gun)
+  ctx.fillStyle = "#2a323a";
+  ctx.beginPath();
+  ctx.arc(cx, y + h * 0.28, w * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+  // barrel pointing forward (up)
+  ctx.fillRect(cx - 2, y + h * 0.08, 4, h * 0.22);
+
+  // bridge / superstructure
+  ctx.fillStyle = "#cfd6dc";
+  ctx.fillRect(cx - w * 0.18, y + h * 0.42, w * 0.36, h * 0.22);
+  ctx.strokeStyle = "#222";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx - w * 0.18, y + h * 0.42, w * 0.36, h * 0.22);
+
+  // rear deck details
+  ctx.fillStyle = "#2a323a";
+  ctx.fillRect(cx - w * 0.1, y + h * 0.7, w * 0.2, h * 0.12);
+
+  // mast
+  ctx.fillStyle = "#111";
+  ctx.fillRect(cx - 1, y + h * 0.35, 2, h * 0.18);
+}
+
+function drawEnemyBoat(ctx: CanvasRenderingContext2D, e: EnemyController) {
+  const { x: cx, y: cy } = e.pos;
+  const w = e.size.x, h = e.size.y;
+  const x = cx - w / 2, y = cy - h / 2;
+  // hull
+  ctx.fillStyle = e.color;
+  ctx.strokeStyle = "#1a0505";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  // pointed toward strait center
+  ctx.moveTo(e.fromSide === "left" ? x + w : x, cy);
+  ctx.lineTo(x + w * 0.85, y);
+  ctx.lineTo(x + w * 0.15, y);
+  ctx.lineTo(x, cy);
+  ctx.lineTo(x + w * 0.15, y + h);
+  ctx.lineTo(x + w * 0.85, y + h);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // turret
+  ctx.fillStyle = "#1a0505";
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(w, h) * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawHpBar(ctx: CanvasRenderingContext2D, cx: number, y: number, w: number, frac: number, label?: string) {
+  const h = 6;
+  const x = cx - w / 2;
+  // bg
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+  // gradient fill orange→red like the reference
+  const g = ctx.createLinearGradient(x, y, x + w, y);
+  g.addColorStop(0, "#ffb648");
+  g.addColorStop(1, "#ff3a3a");
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, w * Math.max(0, frac), h);
+  if (label) {
+    ctx.font = "bold 9px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText(label, cx, y - 2);
+  }
 }
