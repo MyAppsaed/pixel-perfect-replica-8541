@@ -108,16 +108,15 @@ export default function StraitGuardGame() {
       {/* HUD */}
       {screen === "play" && g && (
         <div className="absolute top-0 left-0 right-0 p-3 flex items-start justify-between pointer-events-none">
-          <div className="space-y-2 pointer-events-auto">
-            <HpBar label="Cargo" value={g.cargo.hp / g.cargo.maxHp} color="bg-amber-400" />
-            <HpBar label="Escort" value={g.player.hp / g.player.maxHp} color="bg-emerald-400" />
-            <div className="text-xs text-white/80 font-mono">Progress {Math.floor(g.progress() * 100)}%</div>
+          <div className="space-y-2 pointer-events-auto sg-panel px-3 py-2">
+            <HpBar label="CARGO" value={g.cargo.hp / g.cargo.maxHp} />
+            <HpBar label="FRIGATE" value={g.player.hp / g.player.maxHp} />
+            <div className="text-[10px] tracking-[0.2em] text-cyan-200/80 font-mono">
+              PROGRESS · {String(Math.floor(g.progress() * 100)).padStart(3, "0")}%
+            </div>
           </div>
-          <button
-            onClick={pause}
-            className="pointer-events-auto rounded-md bg-white/10 hover:bg-white/20 text-white px-3 py-2 backdrop-blur"
-          >
-            ⏸ Pause
+          <button onClick={pause} className="pointer-events-auto btn-ghost">
+            ❚❚ PAUSE
           </button>
         </div>
       )}
@@ -128,73 +127,99 @@ export default function StraitGuardGame() {
           <img
             src={logoAsset.url}
             alt="StraitGuard"
-            className="w-[min(90vw,520px)] rounded-2xl shadow-2xl ring-1 ring-white/10"
+            className="w-[min(90vw,520px)] rounded-2xl shadow-2xl ring-1 ring-cyan-400/30"
           />
-          <p className="text-white/70 max-w-sm text-center">Escort the cargo ship through a hostile strait. Drag to move. Auto-fire.</p>
-          <button onClick={() => setScreen("levels")} className="btn-primary">▶ Start Game</button>
+          <p className="sg-tagline">ESCORT · DEFEND · DELIVER</p>
+          <button onClick={() => setScreen("levels")} className="btn-primary">▶ START MISSION</button>
         </Overlay>
       )}
 
       {screen === "levels" && (
         <Overlay>
-          <h2 className="text-3xl font-bold text-white">Select Level</h2>
+          <SgTitle>SELECT MISSION</SgTitle>
           <div className="flex gap-3 flex-wrap justify-center">
             {[1, 2, 3].map((lvl) => (
-              <button key={lvl} onClick={() => startLevel(lvl as 1 | 2 | 3)} className="btn-primary min-w-[140px]">
-                Level {lvl}
-                <span className="block text-xs font-normal opacity-80">
-                  {lvl === 1 ? "Easy" : lvl === 2 ? "Medium" : "Hard"}
+              <button key={lvl} onClick={() => startLevel(lvl as 1 | 2 | 3)} className="btn-primary min-w-[150px]">
+                <span className="block text-[10px] tracking-[0.25em] opacity-80">MISSION 0{lvl}</span>
+                <span className="block text-lg font-black tracking-wider">
+                  {lvl === 1 ? "PATROL" : lvl === 2 ? "BLOCKADE" : "GAUNTLET"}
                 </span>
               </button>
             ))}
           </div>
-          <button onClick={toMenu} className="btn-ghost">Back</button>
+          <button onClick={toMenu} className="btn-ghost">◀ BACK</button>
         </Overlay>
       )}
 
       {screen === "pause" && (
         <Overlay>
-          <h2 className="text-3xl font-bold text-white">Paused</h2>
-          <button onClick={resume} className="btn-primary">Resume</button>
-          <button onClick={restart} className="btn-ghost">Restart</button>
-          <button onClick={toMenu} className="btn-ghost">Main Menu</button>
+          <SgTitle>PAUSED</SgTitle>
+          <button onClick={resume} className="btn-primary">▶ RESUME</button>
+          <button onClick={restart} className="btn-ghost">↻ RESTART</button>
+          <button onClick={toMenu} className="btn-ghost">⌂ MAIN MENU</button>
         </Overlay>
       )}
 
       {screen === "win" && (
         <Overlay>
-          <h2 className="text-4xl font-black text-emerald-400">Victory</h2>
-          <p className="text-white/70">Cargo delivered safely through the strait.</p>
-          <button onClick={restart} className="btn-primary">Play Again</button>
-          <button onClick={toMenu} className="btn-ghost">Main Menu</button>
+          <SgTitle accent="cyan">MISSION COMPLETE</SgTitle>
+          <p className="text-cyan-100/80 tracking-wider text-sm">CARGO DELIVERED · STRAIT SECURED</p>
+          <button onClick={restart} className="btn-primary">▶ PLAY AGAIN</button>
+          <button onClick={toMenu} className="btn-ghost">⌂ MAIN MENU</button>
         </Overlay>
       )}
 
       {screen === "lose" && (
         <Overlay>
-          <h2 className="text-4xl font-black text-red-400">Mission Failed</h2>
-          <p className="text-white/70">
-            {g && !g.cargo.alive ? "The cargo ship was destroyed." : "Your escort was sunk."}
+          <SgTitle accent="red">MISSION FAILED</SgTitle>
+          <p className="text-red-200/80 tracking-wider text-sm uppercase">
+            {g && !g.cargo.alive ? "Cargo ship destroyed" : "Escort frigate sunk"}
           </p>
-          <button onClick={restart} className="btn-primary">Retry</button>
-          <button onClick={toMenu} className="btn-ghost">Main Menu</button>
+          <button onClick={restart} className="btn-primary">↻ RETRY</button>
+          <button onClick={toMenu} className="btn-ghost">⌂ MAIN MENU</button>
         </Overlay>
       )}
 
       <style>{`
         .btn-primary {
-          background: linear-gradient(180deg,#f5c449,#d99a1f);
-          color:#1a1208; font-weight:700; padding:12px 24px; border-radius:10px;
-          box-shadow:0 6px 20px rgba(0,0,0,.35); transition:transform .1s;
+          background: linear-gradient(180deg,#e8ecf2 0%,#aab3bf 45%,#6b7480 55%,#cfd6df 100%);
+          color:#0b1620; font-weight:900; padding:12px 26px; border-radius:4px;
+          letter-spacing:.18em; font-size:13px;
+          border:1px solid rgba(120,220,255,.55);
+          box-shadow:
+            0 0 0 1px rgba(0,0,0,.55),
+            0 0 14px rgba(80,200,255,.35),
+            inset 0 1px 0 rgba(255,255,255,.7),
+            inset 0 -2px 0 rgba(0,0,0,.25);
+          clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+          text-shadow:0 1px 0 rgba(255,255,255,.5);
+          transition:transform .1s, filter .15s;
         }
-        .btn-primary:hover{ transform: translateY(-1px); }
+        .btn-primary:hover{ transform: translateY(-1px); filter:brightness(1.08); }
         .btn-primary:active{ transform: translateY(1px); }
         .btn-ghost {
-          color:#fff; padding:10px 20px; border-radius:10px;
-          background: rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+          color:#cfeaff; padding:10px 22px; border-radius:4px;
+          background: linear-gradient(180deg, rgba(15,30,45,.85), rgba(8,16,24,.85));
+          border:1px solid rgba(120,220,255,.35);
+          letter-spacing:.18em; font-size:12px; font-weight:700;
+          box-shadow: inset 0 0 12px rgba(80,200,255,.12), 0 0 8px rgba(0,0,0,.4);
+          clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
+          backdrop-filter: blur(6px);
         }
-        .btn-ghost:hover{ background: rgba(255,255,255,.16); }
+        .btn-ghost:hover{ border-color: rgba(120,220,255,.7); color:#fff; }
+        .sg-panel {
+          background: linear-gradient(180deg, rgba(10,22,34,.78), rgba(6,14,22,.78));
+          border:1px solid rgba(120,220,255,.28);
+          box-shadow: inset 0 0 14px rgba(80,200,255,.1), 0 4px 18px rgba(0,0,0,.4);
+          backdrop-filter: blur(8px);
+          clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+        }
+        .sg-tagline {
+          color: #9fd8ff; letter-spacing:.45em; font-size:11px; font-weight:700;
+          text-shadow: 0 0 12px rgba(80,200,255,.45);
+        }
       `}</style>
+
 
       {/* level meta for SR */}
       <div className="sr-only">
@@ -206,18 +231,53 @@ export default function StraitGuardGame() {
 
 function Overlay({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-slate-950/70 backdrop-blur-sm p-6">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 p-6
+      bg-[radial-gradient(ellipse_at_center,rgba(8,20,32,.6),rgba(2,6,12,.92))] backdrop-blur-md">
       {children}
     </div>
   );
 }
 
-function HpBar({ label, value, color }: { label: string; value: number; color: string }) {
+function SgTitle({ children, accent = "silver" }: { children: React.ReactNode; accent?: "silver" | "cyan" | "red" }) {
+  const grad =
+    accent === "cyan"
+      ? "linear-gradient(180deg,#dffaff 0%,#7fd9ff 45%,#1f7aa3 55%,#bfeaff 100%)"
+      : accent === "red"
+      ? "linear-gradient(180deg,#ffd6d6 0%,#ff7878 45%,#8a1a1a 55%,#ffb8b8 100%)"
+      : "linear-gradient(180deg,#f4f6fa 0%,#b9c0cc 45%,#5a6470 55%,#e0e5ec 100%)";
   return (
-    <div className="w-44">
-      <div className="text-[11px] uppercase tracking-wider text-white/70 mb-0.5">{label}</div>
-      <div className="h-2.5 w-full rounded-full bg-black/50 overflow-hidden border border-white/10">
-        <div className={`h-full ${color} transition-[width] duration-150`} style={{ width: `${Math.max(0, value) * 100}%` }} />
+    <h2
+      className="text-3xl md:text-4xl font-black tracking-[0.2em] uppercase"
+      style={{
+        backgroundImage: grad,
+        WebkitBackgroundClip: "text",
+        backgroundClip: "text",
+        color: "transparent",
+        textShadow: "0 0 24px rgba(80,200,255,.25)",
+        filter: "drop-shadow(0 2px 0 rgba(0,0,0,.6))",
+      }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function HpBar({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="w-48">
+      <div className="flex justify-between text-[10px] tracking-[0.25em] text-cyan-100/80 mb-0.5 font-bold">
+        <span>{label}</span>
+        <span className="font-mono opacity-70">{String(Math.floor(value * 100)).padStart(3, "0")}</span>
+      </div>
+      <div className="h-2 w-full bg-black/70 overflow-hidden border border-cyan-400/30 shadow-[inset_0_0_6px_rgba(0,0,0,0.8)]">
+        <div
+          className="h-full transition-[width] duration-150"
+          style={{
+            width: `${Math.max(0, value) * 100}%`,
+            background: "linear-gradient(90deg,#ffb648 0%,#ff6a1f 60%,#ff2e2e 100%)",
+            boxShadow: "0 0 8px rgba(255,140,40,.6)",
+          }}
+        />
       </div>
     </div>
   );
