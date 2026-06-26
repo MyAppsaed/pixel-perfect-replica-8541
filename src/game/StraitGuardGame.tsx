@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GameManager, LEVELS } from "./straitguard";
+import logoAsset from "@/assets/straitguard-logo.png.asset.json";
 import { render } from "./Renderer";
 
 type Screen = "menu" | "levels" | "play" | "pause" | "win" | "lose";
@@ -124,7 +125,11 @@ export default function StraitGuardGame() {
       {/* Overlays */}
       {screen === "menu" && (
         <Overlay>
-          <h1 className="text-5xl font-black text-white tracking-tight">STRAIT<span className="text-amber-400">GUARD</span></h1>
+          <img
+            src={logoAsset.url}
+            alt="StraitGuard"
+            className="w-[min(90vw,520px)] rounded-2xl shadow-2xl ring-1 ring-white/10"
+          />
           <p className="text-white/70 max-w-sm text-center">Escort the cargo ship through a hostile strait. Drag to move. Auto-fire.</p>
           <button onClick={() => setScreen("levels")} className="btn-primary">▶ Start Game</button>
         </Overlay>
