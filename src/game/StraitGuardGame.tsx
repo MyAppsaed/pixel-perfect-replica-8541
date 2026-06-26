@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { GameManager, LEVELS } from "./straitguard";
+import logoAsset from "@/assets/straitguard-logo.png.asset.json";
 import { render } from "./Renderer";
 
 type Screen = "menu" | "levels" | "play" | "pause" | "win" | "lose";
