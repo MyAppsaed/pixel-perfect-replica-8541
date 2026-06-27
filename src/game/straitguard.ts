@@ -219,7 +219,16 @@ export class GameManager {
     this.status = "playing";
   }
 
-  resize(w: number, h: number) { this.width = w; this.height = h; }
+  resize(w: number, h: number) {
+    const prevW = this.width, prevH = this.height;
+    this.width = w; this.height = h;
+    if (this.player && prevW > 0 && prevH > 0) {
+      const sx = w / prevW, sy = h / prevH;
+      this.player.pos.x *= sx; this.player.pos.y *= sy;
+      this.cargo.pos.x *= sx; this.cargo.pos.y *= sy;
+      for (const e of this.enemies) { e.pos.x *= sx; e.pos.y *= sy; }
+    }
+  }
   pause() { if (this.status === "playing") this.status = "paused"; }
   resume() { if (this.status === "paused") this.status = "playing"; }
 
