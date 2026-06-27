@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>STRAITGUARD</title>
   <meta name="description" content="STRAITGUARD - 2D top-down naval defense prototype. Escort, defend, deliver.">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #02060c; }
-    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    #game { position: relative; width: 100vw; height: 100vh; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-tap-highlight-color: transparent; }
+    #game { position: relative; width: 100vw; height: 100svh; }
     canvas { display: block; position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; touch-action: none; }
 
     .overlay {
@@ -27,84 +30,75 @@
       border: 1px solid rgba(120,220,255,.35);
       box-shadow: 0 0 40px rgba(80,200,255,.25), inset 0 0 30px rgba(80,200,255,.1);
       background: linear-gradient(180deg, rgba(10,26,42,.9), rgba(4,12,20,.95));
-      padding: 28px 24px 22px;
-      margin-bottom: 6px;
+      padding: 24px 22px 18px;
     }
     .logo-title {
-      font-size: clamp(32px, 10vw, 72px);
+      font-size: clamp(30px, 9vw, 68px);
       font-weight: 900; letter-spacing: .12em; text-transform: uppercase; line-height: 1;
       background: linear-gradient(180deg, #f4f6fa 0%, #b9c0cc 45%, #5a6470 55%, #e0e5ec 100%);
       -webkit-background-clip: text; background-clip: text; color: transparent;
       filter: drop-shadow(0 2px 0 rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(80,200,255,.35));
     }
-    .logo-sub {
-      color: #9fd8ff; letter-spacing: .45em; font-size: 11px; font-weight: 700;
-      text-shadow: 0 0 12px rgba(80,200,255,.45); margin-top: 8px;
-    }
-    .logo-contact {
-      margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(120,220,255,.25);
-      color: #bfeaff; font-size: 11px; letter-spacing: .2em; font-weight: 600;
-    }
-    .logo-contact span { color: #7fd9ff; font-weight: 800; }
+    .logo-sub { color:#9fd8ff; letter-spacing:.45em; font-size:11px; font-weight:700; text-shadow:0 0 12px rgba(80,200,255,.45); margin-top:8px; }
+    [dir="rtl"] .logo-sub { letter-spacing:.2em; }
+    .logo-contact { margin-top:12px; padding-top:10px; border-top:1px solid rgba(120,220,255,.25); color:#bfeaff; font-size:11px; letter-spacing:.2em; font-weight:600; }
+    .logo-contact span { color:#7fd9ff; font-weight:800; }
 
     .sg-title {
       font-size: clamp(26px, 7vw, 44px); font-weight: 900; letter-spacing: .2em; text-transform: uppercase;
-      background: linear-gradient(180deg, #f4f6fa 0%, #b9c0cc 45%, #5a6470 55%, #e0e5ec 100%);
+      background: linear-gradient(180deg,#f4f6fa,#b9c0cc 45%,#5a6470 55%,#e0e5ec);
       -webkit-background-clip: text; background-clip: text; color: transparent;
       text-shadow: 0 0 24px rgba(80,200,255,.25); filter: drop-shadow(0 2px 0 rgba(0,0,0,.6));
     }
-    .sg-title.cyan { background: linear-gradient(180deg, #dffaff 0%, #7fd9ff 45%, #1f7aa3 55%, #bfeaff 100%); -webkit-background-clip: text; background-clip: text; }
-    .sg-title.red { background: linear-gradient(180deg, #ffd6d6 0%, #ff7878 45%, #8a1a1a 55%, #ffb8b8 100%); -webkit-background-clip: text; background-clip: text; }
-    .sg-sub { color: #cfeaff; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; }
-    .sg-sub.red { color: #ffb8b8; }
+    .sg-title.cyan { background: linear-gradient(180deg,#dffaff,#7fd9ff 45%,#1f7aa3 55%,#bfeaff); -webkit-background-clip:text; background-clip:text; }
+    .sg-title.red { background: linear-gradient(180deg,#ffd6d6,#ff7878 45%,#8a1a1a 55%,#ffb8b8); -webkit-background-clip:text; background-clip:text; }
+    .sg-sub { color:#cfeaff; font-size:13px; letter-spacing:.18em; text-transform:uppercase; }
+    .sg-sub.red { color:#ffb8b8; }
 
-    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-    .btn-primary, .btn-ghost {
-      border: none; cursor: pointer; user-select: none; text-transform: uppercase;
-      transition: transform .1s, filter .15s, border-color .15s;
-    }
+    .btn-row { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
+    .btn-primary, .btn-ghost, .btn-language { border:none; cursor:pointer; user-select:none; text-transform:uppercase; transition:transform .1s, filter .15s, border-color .15s; font-family:inherit; }
     .btn-primary {
-      background: linear-gradient(180deg, #e8ecf2 0%, #aab3bf 45%, #6b7480 55%, #cfd6df 100%);
-      color: #0b1620; font-weight: 900; padding: 14px 28px; border-radius: 4px;
-      letter-spacing: .18em; font-size: 13px;
-      border: 1px solid rgba(120,220,255,.55);
-      box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 14px rgba(80,200,255,.35),
-                  inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 0 rgba(0,0,0,.25);
-      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+      background: linear-gradient(180deg,#e8ecf2,#aab3bf 45%,#6b7480 55%,#cfd6df);
+      color:#0b1620; font-weight:900; padding:14px 28px; border-radius:4px;
+      letter-spacing:.18em; font-size:13px;
+      border:1px solid rgba(120,220,255,.55);
+      box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 14px rgba(80,200,255,.35), inset 0 1px 0 rgba(255,255,255,.7), inset 0 -2px 0 rgba(0,0,0,.25);
+      clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+      text-shadow:0 1px 0 rgba(255,255,255,.5);
     }
-    .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.08); }
-    .btn-primary:active { transform: translateY(1px); }
+    .btn-primary:hover { transform:translateY(-1px); filter:brightness(1.08); }
+    .btn-primary:active { transform:translateY(1px); }
     .btn-ghost {
-      color: #cfeaff; padding: 12px 24px; border-radius: 4px;
+      color:#cfeaff; padding:12px 24px; border-radius:4px;
       background: linear-gradient(180deg, rgba(15,30,45,.85), rgba(8,16,24,.85));
-      border: 1px solid rgba(120,220,255,.35); letter-spacing: .18em; font-size: 12px; font-weight: 700;
+      border:1px solid rgba(120,220,255,.35); letter-spacing:.18em; font-size:12px; font-weight:700;
       box-shadow: inset 0 0 12px rgba(80,200,255,.12), 0 0 8px rgba(0,0,0,.4);
-      clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+      clip-path: polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);
       backdrop-filter: blur(6px);
     }
-    .btn-ghost:hover { border-color: rgba(120,220,255,.7); color: #fff; }
+    .btn-ghost:hover { border-color:rgba(120,220,255,.7); color:#fff; }
+    .btn-language {
+      position:absolute; top:12px; right:12px; z-index:20;
+      color:#07141f; padding:11px 16px; border-radius:4px;
+      background: linear-gradient(180deg,#dffaff,#79d8ff 44%,#1f7aa3 58%,#bfeaff);
+      border:1px solid rgba(210,250,255,.9);
+      letter-spacing:.1em; font-size:12px; font-weight:900;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 22px rgba(80,200,255,.58), inset 0 1px 0 rgba(255,255,255,.8);
+      clip-path: polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
+      text-shadow:0 1px 0 rgba(255,255,255,.45);
+    }
+    @media (max-width:520px) { .btn-language { font-size:10px; padding:9px 12px; letter-spacing:.06em; } }
 
-    .hud {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
-      display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 12px; pointer-events: auto;
-    }
-    .sg-panel {
-      pointer-events: auto;
-      background: linear-gradient(180deg, rgba(10,22,34,.78), rgba(6,14,22,.78));
-      border: 1px solid rgba(120,220,255,.28);
-      box-shadow: inset 0 0 14px rgba(80,200,255,.1), 0 4px 18px rgba(0,0,0,.4);
-      backdrop-filter: blur(8px);
-      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-      padding: 12px 14px; border-radius: 4px;
-    }
-    .hp-row { width: 180px; margin-bottom: 8px; }
-    .hp-row:last-child { margin-bottom: 0; }
-    .hp-labels { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .25em; color: #9fd8ff; font-weight: 700; margin-bottom: 2px; }
-    .hp-bar { height: 8px; width: 100%; background: rgba(0,0,0,.7); border: 1px solid rgba(120,220,255,.3); overflow: hidden; }
-    .hp-fill { height: 100%; background: linear-gradient(90deg, #ffb648 0%, #ff6a1f 60%, #ff2e2e 100%); box-shadow: 0 0 8px rgba(255,140,40,.6); transition: width .15s; }
-    .progress-text { font-size: 10px; letter-spacing: .2em; color: rgba(159,216,255,.8); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; margin-top: 6px; }
+    .hud { position:absolute; top:0; left:0; right:0; z-index:5; display:flex; align-items:flex-start; justify-content:space-between; padding:10px; gap:8px; pointer-events:none; }
+    .sg-panel { pointer-events:auto; background: linear-gradient(180deg, rgba(10,22,34,.78), rgba(6,14,22,.78)); border:1px solid rgba(120,220,255,.28); box-shadow: inset 0 0 14px rgba(80,200,255,.1), 0 4px 18px rgba(0,0,0,.4); backdrop-filter: blur(8px); clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); padding:10px 12px; border-radius:4px; max-width:60vw; }
+    .hp-row { width:140px; margin-bottom:6px; }
+    @media (min-width:640px) { .hp-row { width:180px; } }
+    .hp-row:last-child { margin-bottom:0; }
+    .hp-labels { display:flex; justify-content:space-between; font-size:10px; letter-spacing:.22em; color:#9fd8ff; font-weight:700; margin-bottom:2px; }
+    .hp-bar { height:7px; background:rgba(0,0,0,.7); border:1px solid rgba(120,220,255,.3); overflow:hidden; }
+    .hp-fill { height:100%; background:linear-gradient(90deg,#ffb648,#ff6a1f 60%,#ff2e2e); box-shadow:0 0 8px rgba(255,140,40,.6); transition:width .15s; }
+    .progress-text { font-size:10px; letter-spacing:.18em; color:rgba(159,216,255,.8); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; margin-top:6px; }
+    #pause-btn { pointer-events:auto; padding:10px 14px; font-size:11px; }
   </style>
 </head>
 <body>
@@ -113,420 +107,206 @@
 
     <div id="hud" class="hud hidden">
       <div class="sg-panel">
-        <div class="hp-row"><div class="hp-labels"><span>CARGO</span><span id="cargo-hp">100</span></div><div class="hp-bar"><div id="cargo-fill" class="hp-fill" style="width:100%"></div></div></div>
-        <div class="hp-row"><div class="hp-labels"><span>FRIGATE</span><span id="frigate-hp">100</span></div><div class="hp-bar"><div id="frigate-fill" class="hp-fill" style="width:100%"></div></div></div>
-        <div class="progress-text">PROGRESS · <span id="progress-pct">000</span>%</div>
+        <div class="hp-row"><div class="hp-labels"><span data-i18n="cargo">CARGO</span><span id="cargo-hp">100</span></div><div class="hp-bar"><div id="cargo-fill" class="hp-fill" style="width:100%"></div></div></div>
+        <div class="hp-row"><div class="hp-labels"><span data-i18n="frigate">FRIGATE</span><span id="frigate-hp">100</span></div><div class="hp-bar"><div id="frigate-fill" class="hp-fill" style="width:100%"></div></div></div>
+        <div class="progress-text"><span data-i18n="progress">PROGRESS</span> · <span id="progress-pct">000</span>%</div>
       </div>
-      <button id="pause-btn" class="btn-ghost">❚❚ PAUSE</button>
+      <button id="pause-btn" class="btn-ghost" data-i18n="pause">❚❚ PAUSE</button>
     </div>
+
+    <button id="lang-btn" class="btn-language" dir="ltr">🌐 LANGUAGE: <span id="lang-code">EN</span> / <span id="lang-other">العربية</span></button>
 
     <div id="menu" class="overlay">
       <div class="logo-box">
         <div class="logo-title">STRAITGUARD</div>
-        <div class="logo-sub">ESCORT · DEFEND · DELIVER</div>
+        <div class="logo-sub" data-i18n="tagline">ESCORT · DEFEND · DELIVER</div>
         <div class="logo-contact"><span>CLICKTECH</span> · EMAIL: <span>SAEDSERV@GMAIL.COM</span></div>
       </div>
-      <button id="start-btn" class="btn-primary">▶ START MISSION</button>
+      <button id="start-btn" class="btn-primary" data-i18n="start">▶ START MISSION</button>
+      <button id="sound-btn" class="btn-ghost"><span id="sound-icon">🔊</span> <span data-i18n="sound">SOUND</span>: <span id="sound-state" data-i18n="on">ON</span></button>
     </div>
 
     <div id="levels" class="overlay hidden">
-      <div class="sg-title">SELECT MISSION</div>
+      <div class="sg-title" data-i18n="selectMission">SELECT MISSION</div>
       <div class="btn-row">
-        <button class="btn-primary level-btn" data-level="1"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em">MISSION 01</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em">PATROL</span></button>
-        <button class="btn-primary level-btn" data-level="2"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em">MISSION 02</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em">BLOCKADE</span></button>
-        <button class="btn-primary level-btn" data-level="3"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em">MISSION 03</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em">GAUNTLET</span></button>
+        <button class="btn-primary level-btn" data-level="1"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em"><span data-i18n="mission">MISSION</span> 01</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em" data-i18n="patrol">PATROL</span></button>
+        <button class="btn-primary level-btn" data-level="2"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em"><span data-i18n="mission">MISSION</span> 02</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em" data-i18n="blockade">BLOCKADE</span></button>
+        <button class="btn-primary level-btn" data-level="3"><span style="display:block;font-size:10px;opacity:.8;letter-spacing:.25em"><span data-i18n="mission">MISSION</span> 03</span><span style="display:block;font-size:18px;font-weight:900;letter-spacing:.08em" data-i18n="gauntlet">GAUNTLET</span></button>
       </div>
-      <button id="back-btn" class="btn-ghost">◀ BACK</button>
+      <button id="back-btn" class="btn-ghost" data-i18n="back">◀ BACK</button>
     </div>
 
     <div id="pause" class="overlay hidden">
-      <div class="sg-title">PAUSED</div>
-      <button id="resume-btn" class="btn-primary">▶ RESUME</button>
-      <button id="restart-pause-btn" class="btn-ghost">↻ RESTART</button>
-      <button id="menu-pause-btn" class="btn-ghost">⌂ MAIN MENU</button>
+      <div class="sg-title" data-i18n="paused">PAUSED</div>
+      <button id="resume-btn" class="btn-primary" data-i18n="resume">▶ RESUME</button>
+      <button id="restart-pause-btn" class="btn-ghost" data-i18n="restart">↻ RESTART</button>
+      <button id="menu-pause-btn" class="btn-ghost" data-i18n="menu">⌂ MAIN MENU</button>
     </div>
 
     <div id="win" class="overlay hidden">
-      <div class="sg-title cyan">MISSION COMPLETE</div>
-      <div class="sg-sub">CARGO DELIVERED · STRAIT SECURED</div>
-      <button id="restart-win-btn" class="btn-primary">▶ PLAY AGAIN</button>
-      <button id="menu-win-btn" class="btn-ghost">⌂ MAIN MENU</button>
+      <div class="sg-title cyan" data-i18n="complete">MISSION COMPLETE</div>
+      <div class="sg-sub" data-i18n="completeSub">CARGO DELIVERED · STRAIT SECURED</div>
+      <button id="restart-win-btn" class="btn-primary" data-i18n="playAgain">▶ PLAY AGAIN</button>
+      <button id="menu-win-btn" class="btn-ghost" data-i18n="menu">⌂ MAIN MENU</button>
     </div>
 
     <div id="lose" class="overlay hidden">
-      <div class="sg-title red">MISSION FAILED</div>
+      <div class="sg-title red" data-i18n="failed">MISSION FAILED</div>
       <div id="lose-reason" class="sg-sub red">ESCORT FRIGATE SUNK</div>
-      <button id="retry-lose-btn" class="btn-primary">↻ RETRY</button>
-      <button id="menu-lose-btn" class="btn-ghost">⌂ MAIN MENU</button>
+      <button id="retry-lose-btn" class="btn-primary" data-i18n="retry">↻ RETRY</button>
+      <button id="menu-lose-btn" class="btn-ghost" data-i18n="menu">⌂ MAIN MENU</button>
     </div>
   </div>
 
 <script>
 (function(){
-  // ===== GAME LOGIC (mirrors src/game/straitguard.ts) =====
-  const Vec2 = (x, y) => ({x, y});
-
-  class Bullet {
-    constructor(pos, vel, damage, from, radius = 4) {
-      this.pos = pos; this.vel = vel; this.damage = damage; this.from = from; this.radius = radius; this.alive = true;
-    }
-    update(dt) {
-      this.pos.x += this.vel.x * dt;
-      this.pos.y += this.vel.y * dt;
-    }
+  // ===== I18N =====
+  const I18N = {
+    en: { tagline:"ESCORT · DEFEND · DELIVER", start:"▶ START MISSION", selectMission:"SELECT MISSION", mission:"MISSION", patrol:"PATROL", blockade:"BLOCKADE", gauntlet:"GAUNTLET", back:"◀ BACK", pause:"❚❚ PAUSE", paused:"PAUSED", resume:"▶ RESUME", restart:"↻ RESTART", menu:"⌂ MAIN MENU", complete:"MISSION COMPLETE", failed:"MISSION FAILED", completeSub:"CARGO DELIVERED · STRAIT SECURED", cargoLost:"CARGO SHIP DESTROYED", frigateLost:"ESCORT FRIGATE SUNK", playAgain:"▶ PLAY AGAIN", retry:"↻ RETRY", cargo:"CARGO", frigate:"FRIGATE", progress:"PROGRESS", sound:"SOUND", on:"ON", off:"OFF" },
+    ar: { tagline:"مرافقة · دفاع · توصيل", start:"▶ بدء المهمة", selectMission:"اختر المهمة", mission:"مهمة", patrol:"دورية", blockade:"حصار", gauntlet:"تحدٍّ", back:"◀ رجوع", pause:"❚❚ إيقاف", paused:"متوقف", resume:"▶ استئناف", restart:"↻ إعادة", menu:"⌂ القائمة", complete:"اكتملت المهمة", failed:"فشلت المهمة", completeSub:"تم توصيل الشحنة · المضيق مؤمَّن", cargoLost:"تم تدمير سفينة الشحن", frigateLost:"أُغرقت الفرقاطة", playAgain:"▶ العب مجددًا", retry:"↻ أعد المحاولة", cargo:"الشحنة", frigate:"الفرقاطة", progress:"التقدم", sound:"الصوت", on:"تشغيل", off:"إيقاف" }
+  };
+  let lang = "en";
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.dataset.i18n;
+      if (I18N[lang][key]) el.textContent = I18N[lang][key];
+    });
+    document.getElementById("lang-code").textContent = lang === "en" ? "EN" : "AR";
+    document.getElementById("lang-other").textContent = lang === "en" ? "العربية" : "English";
   }
 
-  class Ship {
-    constructor(pos, size, hp) {
-      this.pos = pos; this.size = size; this.hp = hp; this.maxHp = hp;
+  // ===== AUDIO (WebAudio synth) =====
+  const Audio = (() => {
+    let ctx=null, master=null, musicGain=null, muted=false, musicTimer=null, musicMode=null;
+    function ensure(){ if(ctx) return; try{ ctx = new (window.AudioContext||window.webkitAudioContext)(); master = ctx.createGain(); master.gain.value = muted?0:0.6; master.connect(ctx.destination); musicGain = ctx.createGain(); musicGain.gain.value = 0.18; musicGain.connect(master);}catch(e){} }
+    function resume(){ ensure(); if(ctx && ctx.state==="suspended") ctx.resume(); }
+    function tone(freq,dur,type="square",vol=0.3,target){ if(!ctx) return; const o=ctx.createOscillator(); const g=ctx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=0; g.gain.linearRampToValueAtTime(vol, ctx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur); o.connect(g); g.connect(target||master); o.start(); o.stop(ctx.currentTime+dur+0.05); }
+    function noise(dur,vol=0.4){ if(!ctx) return; const b=ctx.createBuffer(1,ctx.sampleRate*dur,ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length); const s=ctx.createBufferSource(); s.buffer=b; const g=ctx.createGain(); g.gain.value=vol; const f=ctx.createBiquadFilter(); f.type="lowpass"; f.frequency.value=800; s.connect(f); f.connect(g); g.connect(master); s.start(); }
+    function play(kind){ ensure(); if(muted||!ctx) return;
+      if(kind==="fire"){ tone(680,0.08,"square",0.22); tone(340,0.1,"sawtooth",0.14); }
+      else if(kind==="hit"){ tone(180,0.12,"square",0.25); noise(0.08,0.2); }
+      else if(kind==="explosion"){ noise(0.35,0.5); tone(90,0.3,"sawtooth",0.3); }
+      else if(kind==="click"){ tone(880,0.05,"square",0.18); }
+      else if(kind==="win"){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.18,"triangle",0.25),i*120)); }
+      else if(kind==="lose"){ [400,300,200,140].forEach((f,i)=>setTimeout(()=>tone(f,0.22,"sawtooth",0.25),i*140)); }
     }
-    get alive() { return this.hp > 0; }
-    damage(d) { this.hp = Math.max(0, this.hp - d); }
-    hits(b) {
-      return b.pos.x > this.pos.x - this.size.x/2 && b.pos.x < this.pos.x + this.size.x/2 &&
-             b.pos.y > this.pos.y - this.size.y/2 && b.pos.y < this.pos.y + this.size.y/2;
-    }
-  }
+    function startMusic(mode){ ensure(); if(!ctx) return; stopMusic(); musicMode=mode; const notes = mode==="play" ? [110,130.81,164.81,196,164.81,130.81] : [98,123.47,146.83,123.47]; let i=0; const step=()=>{ if(!ctx||muted||musicMode!==mode) return; tone(notes[i%notes.length],0.45,"triangle",0.12,musicGain); tone(notes[i%notes.length]*2,0.2,"sine",0.05,musicGain); i++; musicTimer=setTimeout(step,mode==="play"?420:560); }; step(); }
+    function stopMusic(){ if(musicTimer){clearTimeout(musicTimer); musicTimer=null;} musicMode=null; }
+    function setMuted(m){ muted=m; if(master) master.gain.value = m?0:0.6; if(m) stopMusic(); }
+    return {play,startMusic,stopMusic,setMuted,resume,get muted(){return muted;}};
+  })();
 
+  // ===== GAME LOGIC =====
+  class Bullet { constructor(pos,vel,damage,from,radius=4){ this.pos=pos;this.vel=vel;this.damage=damage;this.from=from;this.radius=radius;this.alive=true;} update(dt){this.pos.x+=this.vel.x*dt;this.pos.y+=this.vel.y*dt;} }
+  class Ship { constructor(pos,size,hp){this.pos=pos;this.size=size;this.hp=hp;this.maxHp=hp;} get alive(){return this.hp>0;} damage(d){this.hp=Math.max(0,this.hp-d);} hits(b){return b.pos.x>this.pos.x-this.size.x/2&&b.pos.x<this.pos.x+this.size.x/2&&b.pos.y>this.pos.y-this.size.y/2&&b.pos.y<this.pos.y+this.size.y/2;} }
   class PlayerShipController extends Ship {
-    constructor(pos) {
-      super(pos, {x:34, y:46}, 100);
-      this.fireCooldown = 0; this.fireRate = 0.18; this.target = null; this.speed = 380;
-    }
-    setTarget(p) { this.target = p; }
-    update(dt, bounds) {
-      if (this.target) {
-        const dx = this.target.x - this.pos.x;
-        const dy = this.target.y - this.pos.y;
-        const d = Math.hypot(dx, dy);
-        if (d > 1) {
-          const step = Math.min(d, this.speed * dt);
-          this.pos.x += (dx/d) * step;
-          this.pos.y += (dy/d) * step;
-        }
-      }
-      this.pos.x = Math.max(bounds.minX, Math.min(bounds.maxX, this.pos.x));
-      this.pos.y = Math.max(bounds.minY, Math.min(bounds.maxY, this.pos.y));
-      this.fireCooldown = Math.max(0, this.fireCooldown - dt);
-    }
-    tryFire() {
-      if (this.fireCooldown > 0) return null;
-      this.fireCooldown = this.fireRate;
-      return new Bullet({x:this.pos.x, y:this.pos.y - this.size.y/2}, {x:0, y:-560}, 10, "player");
-    }
+    constructor(pos,hp=100){ super(pos,{x:34,y:46},hp); this.fireCooldown=0; this.fireRate=0.18; this.target=null; this.speed=380; }
+    setTarget(p){ this.target=p; }
+    update(dt,b){ if(this.target){const dx=this.target.x-this.pos.x,dy=this.target.y-this.pos.y,d=Math.hypot(dx,dy); if(d>1){const s=Math.min(d,this.speed*dt); this.pos.x+=(dx/d)*s; this.pos.y+=(dy/d)*s;}} this.pos.x=Math.max(b.minX,Math.min(b.maxX,this.pos.x)); this.pos.y=Math.max(b.minY,Math.min(b.maxY,this.pos.y)); this.fireCooldown=Math.max(0,this.fireCooldown-dt); }
+    tryFire(){ if(this.fireCooldown>0) return null; this.fireCooldown=this.fireRate; Audio.play("fire"); return new Bullet({x:this.pos.x,y:this.pos.y-this.size.y/2},{x:0,y:-560},10,"player"); }
   }
-
-  class CargoShipController extends Ship {
-    constructor(pos) {
-      super(pos, {x:60, y:90}, 300);
-      this.speed = 28;
-    }
-    update(dt) { this.pos.y -= this.speed * dt; }
-  }
-
+  class CargoShipController extends Ship { constructor(pos){ super(pos,{x:60,y:90},300); this.speed=28; } update(dt){ this.pos.y-=this.speed*dt; } }
   class EnemyController extends Ship {
-    constructor(kind, pos, fromSide) {
-      let hp = 20, size = {x:30, y:30}, fireRate = 1.6, speed = 60, dmg = 6, color = "#c44";
-      if (kind === "fast") { hp = 14; size = {x:26, y:26}; fireRate = 1.4; speed = 130; dmg = 5; color = "#e8a"; }
-      if (kind === "heavy") { hp = 60; size = {x:42, y:42}; fireRate = 2.2; speed = 35; dmg = 14; color = "#933"; }
-      super(pos, size, hp);
-      this.kind = kind; this.fromSide = fromSide;
-      this.fireRate = fireRate; this.fireCooldown = Math.random() * fireRate;
-      this.speed = speed; this.bulletDamage = dmg; this.color = color;
+    constructor(kind,pos,fromSide,dmgMul=1,spdMul=1){
+      let hp=20,size={x:30,y:30},fr=1.6,sp=60,dmg=6,col="#c44";
+      if(kind==="fast"){hp=14;size={x:26,y:26};fr=1.4;sp=130;dmg=5;col="#e8a";}
+      if(kind==="heavy"){hp=60;size={x:42,y:42};fr=2.2;sp=35;dmg=14;col="#933";}
+      super(pos,size,hp); this.kind=kind; this.fromSide=fromSide; this.fireRate=fr; this.fireCooldown=Math.random()*fr; this.speed=sp*spdMul; this.bulletDamage=dmg*dmgMul; this.color=col;
     }
-    update(dt, target) {
-      const dx = target.x - this.pos.x;
-      const dy = target.y - this.pos.y;
-      const d = Math.hypot(dx, dy) || 1;
-      if (d > 160) {
-        this.pos.x += (dx/d) * this.speed * dt;
-        this.pos.y += (dy/d) * this.speed * dt;
-      } else {
-        this.pos.y += (dy/d) * this.speed * 0.4 * dt;
-      }
-      this.fireCooldown -= dt;
-      if (this.fireCooldown <= 0) {
-        this.fireCooldown = this.fireRate;
-        const sp = 240;
-        return new Bullet({x:this.pos.x, y:this.pos.y}, {x:(dx/d)*sp, y:(dy/d)*sp}, this.bulletDamage, "enemy");
-      }
+    update(dt,target,maxY){
+      const dx=target.x-this.pos.x, dy=target.y-this.pos.y, d=Math.hypot(dx,dy)||1;
+      if(d>160){ this.pos.x+=(dx/d)*this.speed*dt; this.pos.y+=(dy/d)*this.speed*dt; }
+      else { this.pos.y+=(dy/d)*this.speed*0.4*dt; }
+      if(this.pos.y>maxY) this.pos.y=maxY;
+      this.fireCooldown-=dt;
+      if(this.fireCooldown<=0){ this.fireCooldown=this.fireRate; const sp=240; return new Bullet({x:this.pos.x,y:this.pos.y},{x:(dx/d)*sp,y:(dy/d)*sp},this.bulletDamage,"enemy"); }
       return null;
     }
   }
-
   const LEVELS = {
-    1: { spawnInterval:[2.0,3.2], maxEnemies:5, weights:{basic:0.8, fast:0.2, heavy:0}, cargoSpeed:26, durationPx:4200 },
-    2: { spawnInterval:[1.1,2.0], maxEnemies:9, weights:{basic:0.55, fast:0.35, heavy:0.1}, cargoSpeed:32, durationPx:5400 },
-    3: { spawnInterval:[0.6,1.2], maxEnemies:14, weights:{basic:0.4, fast:0.35, heavy:0.25}, cargoSpeed:38, durationPx:6600 }
+    1:{spawnInterval:[2.8,4.2],maxEnemies:3,weights:{basic:1,fast:0,heavy:0},cargoSpeed:22,durationPx:3600,playerHp:150,enemyDamageMul:0.7,enemySpeedMul:0.8},
+    2:{spawnInterval:[1.4,2.4],maxEnemies:7,weights:{basic:0.55,fast:0.35,heavy:0.1},cargoSpeed:30,durationPx:5200,playerHp:110,enemyDamageMul:1.0,enemySpeedMul:1.0},
+    3:{spawnInterval:[0.5,1.0],maxEnemies:14,weights:{basic:0.3,fast:0.4,heavy:0.3},cargoSpeed:40,durationPx:7000,playerHp:90,enemyDamageMul:1.4,enemySpeedMul:1.3}
   };
-
   class EnemySpawner {
-    constructor(settings) { this.settings = settings; this.timer = 1.0; }
-    pickKind() {
-      const r = Math.random(); let acc = 0;
-      for (const k of ["basic","fast","heavy"]) { acc += this.settings.weights[k]; if (r <= acc) return k; }
-      return "basic";
-    }
-    update(dt, current, width, cargoY) {
-      if (current >= this.settings.maxEnemies) return null;
-      this.timer -= dt;
-      if (this.timer > 0) return null;
-      const [a,b] = this.settings.spawnInterval;
-      this.timer = a + Math.random() * (b-a);
-      const side = Math.random() < 0.5 ? "left" : "right";
-      const x = side === "left" ? 20 : width - 20;
-      const y = cargoY + (Math.random() * 600 - 200);
-      return new EnemyController(this.pickKind(), {x, y}, side);
-    }
+    constructor(s){ this.settings=s; this.timer=1.0; }
+    pickKind(){ const r=Math.random(); let a=0; for(const k of ["basic","fast","heavy"]){ a+=this.settings.weights[k]; if(r<=a) return k; } return "basic"; }
+    update(dt,cur,w,cargoY){ if(cur>=this.settings.maxEnemies) return null; this.timer-=dt; if(this.timer>0) return null; const [a,b]=this.settings.spawnInterval; this.timer=a+Math.random()*(b-a); const side=Math.random()<0.5?"left":"right"; const x=side==="left"?20:w-20; const y=cargoY-200-Math.random()*400; return new EnemyController(this.pickKind(),{x,y},side,this.settings.enemyDamageMul,this.settings.enemySpeedMul); }
   }
-
   class GameManager {
-    constructor(cfg) { this.width = cfg.width; this.height = cfg.height; this.level = cfg.level; this.status = "menu"; }
-    start(level) {
-      this.level = level;
-      const settings = {...LEVELS[level]};
-      this.spawner = new EnemySpawner(settings);
-      this.cargo = new CargoShipController({x:this.width/2, y:this.height - 120});
-      this.cargo.speed = settings.cargoSpeed;
-      this.cargoStartY = this.cargo.pos.y;
-      this.player = new PlayerShipController({x:this.width/2, y:this.height - 220});
-      this.enemies = []; this.bullets = []; this.travelled = 0; this.cameraY = 0;
-      this.status = "playing";
-    }
-    resize(w,h) { this.width = w; this.height = h; }
-    pause() { if (this.status === "playing") this.status = "paused"; }
-    resume() { if (this.status === "paused") this.status = "playing"; }
-    update(dt) {
-      if (this.status !== "playing") return;
-      const settings = LEVELS[this.level];
+    constructor(cfg){ this.width=cfg.width; this.height=cfg.height; this.level=cfg.level; this.status="menu"; }
+    start(level){ this.level=level; const s={...LEVELS[level]}; this.spawner=new EnemySpawner(s); this.cargo=new CargoShipController({x:this.width/2,y:this.height-120}); this.cargo.speed=s.cargoSpeed; this.player=new PlayerShipController({x:this.width/2,y:this.height-220},s.playerHp); this.enemies=[]; this.bullets=[]; this.travelled=0; this.cameraY=0; this.status="playing"; }
+    resize(w,h){ const pw=this.width,ph=this.height; this.width=w; this.height=h; if(this.player&&pw>0&&ph>0){const sx=w/pw,sy=h/ph; this.player.pos.x*=sx; this.player.pos.y*=sy; this.cargo.pos.x*=sx; this.cargo.pos.y*=sy; for(const e of this.enemies){e.pos.x*=sx; e.pos.y*=sy;}} }
+    pause(){ if(this.status==="playing") this.status="paused"; }
+    resume(){ if(this.status==="paused") this.status="playing"; }
+    update(dt){
+      if(this.status!=="playing") return;
+      const s=LEVELS[this.level];
       this.cargo.update(dt);
-      const desiredCargoScreenY = this.height - 140;
-      const shift = desiredCargoScreenY - this.cargo.pos.y;
-      if (shift > 0) {
-        this.cargo.pos.y += shift; this.player.pos.y += shift;
-        for (const e of this.enemies) e.pos.y += shift;
-        for (const b of this.bullets) b.pos.y += shift;
-        this.cameraY += shift; this.travelled += shift;
-      }
-      this.player.update(dt, {minX:60, maxX:this.width-60, minY:40, maxY:this.height-40});
-      const pb = this.player.tryFire();
-      if (pb) this.bullets.push(pb);
-      const ne = this.spawner.update(dt, this.enemies.length, this.width, this.cargo.pos.y);
-      if (ne) this.enemies.push(ne);
-      for (const e of this.enemies) {
-        const target = Math.random() < 0.4 ? this.player.pos : this.cargo.pos;
-        const eb = e.update(dt, target);
-        if (eb) this.bullets.push(eb);
-      }
-      for (const b of this.bullets) {
+      const desired=this.height-140, shift=desired-this.cargo.pos.y;
+      if(shift>0){ this.cargo.pos.y+=shift; this.player.pos.y+=shift; for(const e of this.enemies) e.pos.y+=shift; for(const b of this.bullets) b.pos.y+=shift; this.cameraY+=shift; this.travelled+=shift; }
+      const sm=Math.max(28,Math.min(60,this.width*0.08));
+      this.player.update(dt,{minX:sm,maxX:this.width-sm,minY:40,maxY:this.height-40});
+      const pb=this.player.tryFire(); if(pb) this.bullets.push(pb);
+      const ne=this.spawner.update(dt,this.enemies.length,this.width,this.cargo.pos.y); if(ne) this.enemies.push(ne);
+      const enemyMaxY=this.player.pos.y-this.player.size.y/2-10;
+      for(const e of this.enemies){ const t=Math.random()<0.4?this.player.pos:this.cargo.pos; const eb=e.update(dt,t,enemyMaxY); if(eb) this.bullets.push(eb); }
+      for(const b of this.bullets){
         b.update(dt);
-        if (b.from === "player") {
-          for (const e of this.enemies) { if (e.alive && e.hits(b)) { e.damage(b.damage); b.alive = false; break; } }
-        } else {
-          if (this.player.hits(b)) { this.player.damage(b.damage); b.alive = false; }
-          else if (this.cargo.hits(b)) { this.cargo.damage(b.damage); b.alive = false; }
-        }
-        if (b.pos.x < -20 || b.pos.x > this.width+20 || b.pos.y < -40 || b.pos.y > this.height+40) b.alive = false;
+        if(b.from==="player"){ for(const e of this.enemies){ if(e.alive&&e.hits(b)){ e.damage(b.damage); b.alive=false; Audio.play(e.alive?"hit":"explosion"); break; } } }
+        else { if(this.player.hits(b)){ this.player.damage(b.damage); b.alive=false; Audio.play("hit"); } else if(this.cargo.hits(b)){ this.cargo.damage(b.damage); b.alive=false; Audio.play("hit"); } }
+        if(b.pos.x<-20||b.pos.x>this.width+20||b.pos.y<-40||b.pos.y>this.height+40) b.alive=false;
       }
-      this.bullets = this.bullets.filter(b => b.alive);
-      this.enemies = this.enemies.filter(e => e.alive && e.pos.y < this.height + 80);
-      if (!this.cargo.alive || !this.player.alive) this.status = "lose";
-      else if (this.travelled >= settings.durationPx) this.status = "win";
+      this.bullets=this.bullets.filter(b=>b.alive);
+      this.enemies=this.enemies.filter(e=>e.alive&&e.pos.y<this.height+80);
+      if(!this.cargo.alive||!this.player.alive){ this.status="lose"; Audio.play("lose"); Audio.stopMusic(); }
+      else if(this.travelled>=s.durationPx){ this.status="win"; Audio.play("win"); Audio.stopMusic(); }
     }
-    progress() { return Math.min(1, this.travelled / LEVELS[this.level].durationPx); }
+    progress(){ return Math.min(1,this.travelled/LEVELS[this.level].durationPx); }
   }
 
   // ===== RENDERER =====
-  function drawWake(ctx, x, y, w, h) {
-    const g = ctx.createLinearGradient(0, y, 0, y + h);
-    g.addColorStop(0, "rgba(255,255,255,0.45)"); g.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(x - w/2, y); ctx.lineTo(x + w/2, y); ctx.lineTo(x + w*0.9, y + h); ctx.lineTo(x - w*0.9, y + h);
-    ctx.closePath(); ctx.fill();
-  }
-  function drawCargoShip(ctx, cx, cy, w, h) {
-    const x = cx - w/2, y = cy - h/2;
-    ctx.fillStyle = "#7a1f1a"; ctx.strokeStyle = "#1a0a08"; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, y); ctx.lineTo(x + w, y + h*0.18); ctx.lineTo(x + w, y + h*0.95);
-    ctx.quadraticCurveTo(cx, y + h, x, y + h*0.95); ctx.lineTo(x, y + h*0.18);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#d6cfb8"; ctx.fillRect(x + w*0.16, y + h*0.12, w*0.68, h*0.78);
-    ctx.fillStyle = "#f3f1ea"; ctx.fillRect(cx - w*0.18, y + h*0.08, w*0.36, h*0.1);
-    ctx.strokeStyle = "#444"; ctx.lineWidth = 1; ctx.strokeRect(cx - w*0.18, y + h*0.08, w*0.36, h*0.1);
-    const colors = ["#c1392b","#2c6fb8","#e08a2a","#3b8a4f","#b03b6e","#d9c24a"];
-    const cols = 4, rows = 7;
-    const gx = x + w*0.2, gy = y + h*0.22;
-    const cw = (w*0.6)/cols, chh = (h*0.62)/rows;
-    for (let r=0; r<rows; r++) for (let c=0; c<cols; c++) {
-      ctx.fillStyle = colors[(r*7 + c*3) % colors.length];
-      ctx.fillRect(gx + c*cw + 1, gy + r*chh + 1, cw - 2, chh - 2);
-      ctx.strokeStyle = "rgba(0,0,0,0.4)"; ctx.strokeRect(gx + c*cw + 1, gy + r*chh + 1, cw - 2, chh - 2);
-    }
-    ctx.fillStyle = "#222"; ctx.fillRect(cx - 1, y + h*0.86, 2, h*0.08);
-  }
-  function drawFrigate(ctx, cx, cy, w, h) {
-    const x = cx - w/2, y = cy - h/2;
-    ctx.fillStyle = "#4a5560"; ctx.strokeStyle = "#0d1115"; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, y); ctx.lineTo(x + w*0.92, y + h*0.22); ctx.lineTo(x + w*0.92, y + h*0.92);
-    ctx.lineTo(x + w*0.08, y + h*0.92); ctx.lineTo(x + w*0.08, y + h*0.22);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#6b7884"; ctx.fillRect(x + w*0.18, y + h*0.18, w*0.64, h*0.7);
-    ctx.fillStyle = "#2a323a"; ctx.beginPath(); ctx.arc(cx, y + h*0.28, w*0.14, 0, Math.PI*2); ctx.fill();
-    ctx.fillRect(cx - 2, y + h*0.08, 4, h*0.22);
-    ctx.fillStyle = "#cfd6dc"; ctx.fillRect(cx - w*0.18, y + h*0.42, w*0.36, h*0.22);
-    ctx.strokeStyle = "#222"; ctx.lineWidth = 1; ctx.strokeRect(cx - w*0.18, y + h*0.42, w*0.36, h*0.22);
-    ctx.fillStyle = "#2a323a"; ctx.fillRect(cx - w*0.1, y + h*0.7, w*0.2, h*0.12);
-    ctx.fillStyle = "#111"; ctx.fillRect(cx - 1, y + h*0.35, 2, h*0.18);
-  }
-  function drawEnemyBoat(ctx, e) {
-    const cx = e.pos.x, cy = e.pos.y, w = e.size.x, h = e.size.y;
-    const x = cx - w/2, y = cy - h/2;
-    ctx.fillStyle = e.color; ctx.strokeStyle = "#1a0505"; ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(e.fromSide === "left" ? x + w : x, cy);
-    ctx.lineTo(x + w*0.85, y); ctx.lineTo(x + w*0.15, y); ctx.lineTo(x, cy);
-    ctx.lineTo(x + w*0.15, y + h); ctx.lineTo(x + w*0.85, y + h);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = "#1a0505"; ctx.beginPath(); ctx.arc(cx, cy, Math.min(w,h)*0.22, 0, Math.PI*2); ctx.fill();
-  }
-  function drawHpBar(ctx, cx, y, w, frac, label) {
-    const h = 6, x = cx - w/2;
-    ctx.fillStyle = "rgba(0,0,0,0.7)"; ctx.fillRect(x-1, y-1, w+2, h+2);
-    const g = ctx.createLinearGradient(x, y, x+w, y);
-    g.addColorStop(0, "#ffb648"); g.addColorStop(1, "#ff3a3a");
-    ctx.fillStyle = g; ctx.fillRect(x, y, w*Math.max(0, frac), h);
-    if (label) {
-      ctx.font = "bold 9px ui-sans-serif, system-ui, sans-serif"; ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-      ctx.fillText(label, cx, y - 2);
-    }
-  }
-  function renderGame(ctx, g) {
-    const W = g.width, H = g.height;
-    const grd = ctx.createLinearGradient(0, 0, 0, H);
-    grd.addColorStop(0, "#062a44"); grd.addColorStop(1, "#0d4666");
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(255,255,255,0.05)";
-    const stripeH = 22; const offset = (g.cameraY * 0.6) % stripeH;
-    for (let y = -stripeH + offset; y < H; y += stripeH * 2) ctx.fillRect(120, y, W - 240, stripeH);
-    const landW = 110;
-    ctx.fillStyle = "#3b2a1c"; ctx.fillRect(0, 0, landW, H); ctx.fillRect(W - landW, 0, landW, H);
-    ctx.fillStyle = "#5a4530";
-    for (let y = 0; y < H; y += 30) {
-      const jitterL = ((Math.sin((y + g.cameraY)*0.05) + 1)/2)*14;
-      const jitterR = ((Math.cos((y + g.cameraY)*0.05) + 1)/2)*14;
-      ctx.fillRect(landW - jitterL, y, jitterL, 30); ctx.fillRect(W - landW, y, jitterR, 30);
-    }
-    const prog = g.progress();
-    ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(landW, 14, W - landW*2, 4);
-    ctx.fillStyle = "rgba(255,200,60,0.95)"; ctx.fillRect(landW, 14, (W - landW*2)*prog, 4);
-    drawWake(ctx, g.cargo.pos.x, g.cargo.pos.y + g.cargo.size.y/2, g.cargo.size.x*0.8, 80);
-    drawCargoShip(ctx, g.cargo.pos.x, g.cargo.pos.y, g.cargo.size.x, g.cargo.size.y);
-    drawHpBar(ctx, g.cargo.pos.x, g.cargo.pos.y - g.cargo.size.y/2 - 12, 70, g.cargo.hp/g.cargo.maxHp, "CARGO");
-    for (const e of g.enemies) { drawEnemyBoat(ctx, e); drawHpBar(ctx, e.pos.x, e.pos.y - e.size.y/2 - 10, e.size.x + 14, e.hp/e.maxHp); }
-    drawWake(ctx, g.player.pos.x, g.player.pos.y + g.player.size.y/2, g.player.size.x*0.7, 50);
-    drawFrigate(ctx, g.player.pos.x, g.player.pos.y, g.player.size.x, g.player.size.y);
-    drawHpBar(ctx, g.player.pos.x, g.player.pos.y - g.player.size.y/2 - 12, 60, g.player.hp/g.player.maxHp, "FRIGATE");
-    for (const b of g.bullets) {
-      ctx.beginPath(); ctx.fillStyle = b.from === "player" ? "#e8fff0" : "#ffd060";
-      ctx.shadowColor = b.from === "player" ? "#7df2b0" : "#ffae3a"; ctx.shadowBlur = 8;
-      ctx.arc(b.pos.x, b.pos.y, b.radius, 0, Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-    }
-  }
+  function drawWake(ctx,x,y,w,h){ const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,"rgba(255,255,255,0.45)"); g.addColorStop(1,"rgba(255,255,255,0)"); ctx.fillStyle=g; ctx.beginPath(); ctx.moveTo(x-w/2,y); ctx.lineTo(x+w/2,y); ctx.lineTo(x+w*0.9,y+h); ctx.lineTo(x-w*0.9,y+h); ctx.closePath(); ctx.fill(); }
+  function drawCargoShip(ctx,cx,cy,w,h){ const x=cx-w/2,y=cy-h/2; ctx.fillStyle="#7a1f1a"; ctx.strokeStyle="#1a0a08"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(x+w,y+h*0.18); ctx.lineTo(x+w,y+h*0.95); ctx.quadraticCurveTo(cx,y+h,x,y+h*0.95); ctx.lineTo(x,y+h*0.18); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#d6cfb8"; ctx.fillRect(x+w*0.16,y+h*0.12,w*0.68,h*0.78); ctx.fillStyle="#f3f1ea"; ctx.fillRect(cx-w*0.18,y+h*0.08,w*0.36,h*0.1); const colors=["#c1392b","#2c6fb8","#e08a2a","#3b8a4f","#b03b6e","#d9c24a"]; const cols=4,rows=7,gx=x+w*0.2,gy=y+h*0.22,cw=(w*0.6)/cols,chh=(h*0.62)/rows; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ ctx.fillStyle=colors[(r*7+c*3)%colors.length]; ctx.fillRect(gx+c*cw+1,gy+r*chh+1,cw-2,chh-2); ctx.strokeStyle="rgba(0,0,0,0.4)"; ctx.strokeRect(gx+c*cw+1,gy+r*chh+1,cw-2,chh-2);} }
+  function drawFrigate(ctx,cx,cy,w,h){ const x=cx-w/2,y=cy-h/2; ctx.fillStyle="#4a5560"; ctx.strokeStyle="#0d1115"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(cx,y); ctx.lineTo(x+w*0.92,y+h*0.22); ctx.lineTo(x+w*0.92,y+h*0.92); ctx.lineTo(x+w*0.08,y+h*0.92); ctx.lineTo(x+w*0.08,y+h*0.22); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#6b7884"; ctx.fillRect(x+w*0.18,y+h*0.18,w*0.64,h*0.7); ctx.fillStyle="#2a323a"; ctx.beginPath(); ctx.arc(cx,y+h*0.28,w*0.14,0,Math.PI*2); ctx.fill(); ctx.fillRect(cx-2,y+h*0.08,4,h*0.22); ctx.fillStyle="#cfd6dc"; ctx.fillRect(cx-w*0.18,y+h*0.42,w*0.36,h*0.22); }
+  function drawEnemyBoat(ctx,e){ const cx=e.pos.x,cy=e.pos.y,w=e.size.x,h=e.size.y,x=cx-w/2,y=cy-h/2; ctx.fillStyle=e.color; ctx.strokeStyle="#1a0505"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(e.fromSide==="left"?x+w:x,cy); ctx.lineTo(x+w*0.85,y); ctx.lineTo(x+w*0.15,y); ctx.lineTo(x,cy); ctx.lineTo(x+w*0.15,y+h); ctx.lineTo(x+w*0.85,y+h); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle="#1a0505"; ctx.beginPath(); ctx.arc(cx,cy,Math.min(w,h)*0.22,0,Math.PI*2); ctx.fill(); }
+  function drawHpBar(ctx,cx,y,w,frac,label){ const h=6,x=cx-w/2; ctx.fillStyle="rgba(0,0,0,0.7)"; ctx.fillRect(x-1,y-1,w+2,h+2); const g=ctx.createLinearGradient(x,y,x+w,y); g.addColorStop(0,"#ffb648"); g.addColorStop(1,"#ff3a3a"); ctx.fillStyle=g; ctx.fillRect(x,y,w*Math.max(0,frac),h); if(label){ ctx.font="bold 9px ui-sans-serif,system-ui,sans-serif"; ctx.fillStyle="#fff"; ctx.textAlign="center"; ctx.textBaseline="bottom"; ctx.fillText(label,cx,y-2);} }
+  function renderGame(ctx,g){ const W=g.width,H=g.height; const grd=ctx.createLinearGradient(0,0,0,H); grd.addColorStop(0,"#062a44"); grd.addColorStop(1,"#0d4666"); ctx.fillStyle=grd; ctx.fillRect(0,0,W,H); ctx.fillStyle="rgba(255,255,255,0.05)"; const stripeH=22, offset=(g.cameraY*0.6)%stripeH; for(let y=-stripeH+offset;y<H;y+=stripeH*2) ctx.fillRect(120,y,W-240,stripeH); const landW=Math.min(110,W*0.12); ctx.fillStyle="#3b2a1c"; ctx.fillRect(0,0,landW,H); ctx.fillRect(W-landW,0,landW,H); ctx.fillStyle="#5a4530"; for(let y=0;y<H;y+=30){ const jL=((Math.sin((y+g.cameraY)*0.05)+1)/2)*14; const jR=((Math.cos((y+g.cameraY)*0.05)+1)/2)*14; ctx.fillRect(landW-jL,y,jL,30); ctx.fillRect(W-landW,y,jR,30);} drawWake(ctx,g.cargo.pos.x,g.cargo.pos.y+g.cargo.size.y/2,g.cargo.size.x*0.8,80); drawCargoShip(ctx,g.cargo.pos.x,g.cargo.pos.y,g.cargo.size.x,g.cargo.size.y); drawHpBar(ctx,g.cargo.pos.x,g.cargo.pos.y-g.cargo.size.y/2-12,70,g.cargo.hp/g.cargo.maxHp,"CARGO"); for(const e of g.enemies){ drawEnemyBoat(ctx,e); drawHpBar(ctx,e.pos.x,e.pos.y-e.size.y/2-10,e.size.x+14,e.hp/e.maxHp);} drawWake(ctx,g.player.pos.x,g.player.pos.y+g.player.size.y/2,g.player.size.x*0.7,50); drawFrigate(ctx,g.player.pos.x,g.player.pos.y,g.player.size.x,g.player.size.y); drawHpBar(ctx,g.player.pos.x,g.player.pos.y-g.player.size.y/2-12,60,g.player.hp/g.player.maxHp,"FRIGATE"); for(const b of g.bullets){ ctx.beginPath(); ctx.fillStyle=b.from==="player"?"#e8fff0":"#ffd060"; ctx.shadowColor=b.from==="player"?"#7df2b0":"#ffae3a"; ctx.shadowBlur=8; ctx.arc(b.pos.x,b.pos.y,b.radius,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; } }
 
-  // ===== UI / LOOP =====
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d");
-  const screens = {
-    menu: document.getElementById("menu"),
-    levels: document.getElementById("levels"),
-    pause: document.getElementById("pause"),
-    win: document.getElementById("win"),
-    lose: document.getElementById("lose"),
-    hud: document.getElementById("hud")
-  };
-  let game = null;
-  let lastT = 0, raf = null;
-  let currentScreen = "menu";
+  // ===== UI =====
+  const canvas=document.getElementById("canvas"), ctx=canvas.getContext("2d");
+  const screens={ menu:document.getElementById("menu"), levels:document.getElementById("levels"), pause:document.getElementById("pause"), win:document.getElementById("win"), lose:document.getElementById("lose"), hud:document.getElementById("hud") };
+  let game=null, lastT=0, currentScreen="menu";
+  function show(name){ currentScreen=name; for(const k in screens) screens[k].classList.add("hidden"); if(screens[name]) screens[name].classList.remove("hidden"); document.getElementById("lang-btn").style.display = name==="hud" ? "none" : "block"; if(Audio.muted){ Audio.stopMusic(); } else if(name==="menu"||name==="levels") Audio.startMusic("menu"); else if(name==="hud") Audio.startMusic("play"); else if(name==="pause") Audio.stopMusic(); }
+  function resize(){ const dpr=Math.min(window.devicePixelRatio||1,2); const r=canvas.getBoundingClientRect(); canvas.width=Math.floor(r.width*dpr); canvas.height=Math.floor(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); if(game) game.resize(r.width,r.height); }
+  function startLevel(lvl){ const r=canvas.getBoundingClientRect(); game=new GameManager({width:r.width,height:r.height,level:lvl}); game.start(lvl); show("hud"); }
+  function loop(t){ const dt=Math.min(0.05,(t-lastT)/1000||0); lastT=t; if(game){ game.update(dt); renderGame(ctx,game); document.getElementById("cargo-hp").textContent=String(Math.floor(game.cargo.hp/game.cargo.maxHp*100)).padStart(3,"0"); document.getElementById("cargo-fill").style.width=(Math.max(0,game.cargo.hp/game.cargo.maxHp)*100)+"%"; document.getElementById("frigate-hp").textContent=String(Math.floor(game.player.hp/game.player.maxHp*100)).padStart(3,"0"); document.getElementById("frigate-fill").style.width=(Math.max(0,game.player.hp/game.player.maxHp)*100)+"%"; document.getElementById("progress-pct").textContent=String(Math.floor(game.progress()*100)).padStart(3,"0"); if(game.status==="win") show("win"); else if(game.status==="lose"){ document.getElementById("lose-reason").textContent=!game.cargo.alive?I18N[lang].cargoLost:I18N[lang].frigateLost; show("lose"); } } else { ctx.fillStyle="#0b3a5b"; ctx.fillRect(0,0,canvas.width,canvas.height); } requestAnimationFrame(loop); }
 
-  function show(name) {
-    currentScreen = name;
-    for (const k in screens) screens[k].classList.add("hidden");
-    if (screens[name]) screens[name].classList.remove("hidden");
-  }
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.floor(rect.width * dpr);
-    canvas.height = Math.floor(rect.height * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (game) game.resize(rect.width, rect.height);
-  }
-  function startLevel(lvl) {
-    const rect = canvas.getBoundingClientRect();
-    game = new GameManager({ width: rect.width, height: rect.height, level: lvl });
-    game.start(lvl);
-    show("hud");
-  }
-  function loop(t) {
-    const dt = Math.min(0.05, (t - lastT)/1000 || 0);
-    lastT = t;
-    if (game) {
-      game.update(dt);
-      renderGame(ctx, game);
-      document.getElementById("cargo-hp").textContent = String(Math.floor(game.cargo.hp/game.cargo.maxHp*100)).padStart(3,"0");
-      document.getElementById("cargo-fill").style.width = (Math.max(0, game.cargo.hp/game.cargo.maxHp)*100) + "%";
-      document.getElementById("frigate-hp").textContent = String(Math.floor(game.player.hp/game.player.maxHp*100)).padStart(3,"0");
-      document.getElementById("frigate-fill").style.width = (Math.max(0, game.player.hp/game.player.maxHp)*100) + "%";
-      document.getElementById("progress-pct").textContent = String(Math.floor(game.progress()*100)).padStart(3,"0");
-      if (game.status === "win") show("win");
-      else if (game.status === "lose") {
-        document.getElementById("lose-reason").textContent = !game.cargo.alive ? "CARGO SHIP DESTROYED" : "ESCORT FRIGATE SUNK";
-        show("lose");
-      }
-    } else {
-      ctx.fillStyle = "#0b3a5b"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    raf = requestAnimationFrame(loop);
-  }
+  function getPos(e){ const r=canvas.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+  canvas.addEventListener("pointerdown",e=>{ if(!game||game.status!=="playing") return; canvas.setPointerCapture(e.pointerId); game.player.setTarget(getPos(e)); });
+  canvas.addEventListener("pointermove",e=>{ if(!game||game.status!=="playing") return; if(e.buttons===0&&e.pointerType==="mouse") return; game.player.setTarget(getPos(e)); });
+  canvas.addEventListener("pointerup",()=>{ if(game) game.player.setTarget(null); });
+  canvas.addEventListener("pointercancel",()=>{ if(game) game.player.setTarget(null); });
 
-  // input
-  function getPos(e) {
-    const r = canvas.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
-  }
-  canvas.addEventListener("pointerdown", e => {
-    if (!game || game.status !== "playing") return;
-    canvas.setPointerCapture(e.pointerId);
-    game.player.setTarget(getPos(e));
-  });
-  canvas.addEventListener("pointermove", e => {
-    if (!game || game.status !== "playing") return;
-    if (e.buttons === 0 && e.pointerType === "mouse") return;
-    game.player.setTarget(getPos(e));
-  });
-  canvas.addEventListener("pointerup", () => { if (game) game.player.setTarget(null); });
-  canvas.addEventListener("pointercancel", () => { if (game) game.player.setTarget(null); });
-
-  // button bindings
-  document.getElementById("start-btn").addEventListener("click", () => show("levels"));
-  document.getElementById("back-btn").addEventListener("click", () => show("menu"));
-  document.querySelectorAll(".level-btn").forEach(b => b.addEventListener("click", () => startLevel(parseInt(b.dataset.level))));
-  document.getElementById("pause-btn").addEventListener("click", () => { if (game) game.pause(); show("pause"); });
-  document.getElementById("resume-btn").addEventListener("click", () => { if (game) game.resume(); show("hud"); });
-  document.getElementById("restart-pause-btn").addEventListener("click", () => { if (game) startLevel(game.level); });
-  document.getElementById("restart-win-btn").addEventListener("click", () => { if (game) startLevel(game.level); });
-  document.getElementById("retry-lose-btn").addEventListener("click", () => { if (game) startLevel(game.level); });
-  document.getElementById("menu-pause-btn").addEventListener("click", () => { game = null; show("menu"); });
-  document.getElementById("menu-win-btn").addEventListener("click", () => { game = null; show("menu"); });
-  document.getElementById("menu-lose-btn").addEventListener("click", () => { game = null; show("menu"); });
+  const click=fn=>()=>{ Audio.resume(); Audio.play("click"); fn(); };
+  document.getElementById("start-btn").addEventListener("click", click(()=>show("levels")));
+  document.getElementById("back-btn").addEventListener("click", click(()=>show("menu")));
+  document.querySelectorAll(".level-btn").forEach(b=>b.addEventListener("click", click(()=>startLevel(parseInt(b.dataset.level)))));
+  document.getElementById("pause-btn").addEventListener("click", click(()=>{ if(game) game.pause(); show("pause"); }));
+  document.getElementById("resume-btn").addEventListener("click", click(()=>{ if(game) game.resume(); show("hud"); }));
+  document.getElementById("restart-pause-btn").addEventListener("click", click(()=>{ if(game) startLevel(game.level); }));
+  document.getElementById("restart-win-btn").addEventListener("click", click(()=>{ if(game) startLevel(game.level); }));
+  document.getElementById("retry-lose-btn").addEventListener("click", click(()=>{ if(game) startLevel(game.level); }));
+  document.getElementById("menu-pause-btn").addEventListener("click", click(()=>{ game=null; show("menu"); }));
+  document.getElementById("menu-win-btn").addEventListener("click", click(()=>{ game=null; show("menu"); }));
+  document.getElementById("menu-lose-btn").addEventListener("click", click(()=>{ game=null; show("menu"); }));
+  document.getElementById("lang-btn").addEventListener("click", click(()=>{ lang = lang==="en"?"ar":"en"; applyLang(); }));
+  document.getElementById("sound-btn").addEventListener("click", ()=>{ Audio.resume(); const m=!Audio.muted; Audio.setMuted(m); document.getElementById("sound-icon").textContent=m?"🔇":"🔊"; document.getElementById("sound-state").textContent=I18N[lang][m?"off":"on"]; if(!m) Audio.startMusic(currentScreen==="hud"?"play":"menu"); Audio.play("click"); });
 
   window.addEventListener("resize", resize);
-  resize();
-  show("menu");
-  raf = requestAnimationFrame(loop);
+  applyLang(); resize(); show("menu"); requestAnimationFrame(loop);
 })();
 </script>
 </body>
