@@ -239,8 +239,9 @@ export class GameManager {
       this.travelled += shift;
     }
 
+    const sideMargin = Math.max(28, Math.min(60, this.width * 0.08));
     this.player.update(dt, {
-      minX: 60, maxX: this.width - 60,
+      minX: sideMargin, maxX: this.width - sideMargin,
       minY: 40, maxY: this.height - 40,
     });
     const pb = this.player.tryFire();
