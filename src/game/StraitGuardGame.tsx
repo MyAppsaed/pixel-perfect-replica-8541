@@ -164,15 +164,15 @@ export default function StraitGuardGame() {
       )}
 
       {screen === "play" && g && (
-        <div className="absolute top-0 left-0 right-0 p-3 flex items-start justify-between pointer-events-none">
-          <div className="space-y-2 pointer-events-auto sg-panel px-3 py-2">
+        <div className="absolute top-0 left-0 right-0 p-2 sm:p-3 flex items-start justify-between gap-2 pointer-events-none">
+          <div className="space-y-1.5 pointer-events-auto sg-panel px-2 sm:px-3 py-1.5 sm:py-2 max-w-[60vw]">
             <HpBar label={t.cargo} value={g.cargo.hp / g.cargo.maxHp} />
             <HpBar label={t.frigate} value={g.player.hp / g.player.maxHp} />
-            <div className="text-[10px] tracking-[0.2em] text-cyan-200/80 font-mono">
+            <div className="text-[9px] sm:text-[10px] tracking-[0.2em] text-cyan-200/80 font-mono">
               {t.progress} · {String(Math.floor(g.progress() * 100)).padStart(3, "0")}%
             </div>
           </div>
-          <button onClick={click(pause)} className="pointer-events-auto btn-ghost">{t.pause}</button>
+          <button onClick={click(pause)} className="pointer-events-auto btn-ghost shrink-0 !px-3 !py-2 text-[10px] sm:text-xs">{t.pause}</button>
         </div>
       )}
 
