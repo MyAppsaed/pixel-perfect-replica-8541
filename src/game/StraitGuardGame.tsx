@@ -149,6 +149,20 @@ export default function StraitGuardGame() {
     <div dir={dir} className="relative w-full h-[100svh] bg-slate-900 overflow-hidden select-none touch-none">
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
 
+      {screen !== "play" && (
+        <div className="absolute top-3 right-3 z-20 pointer-events-auto" dir="ltr">
+          <button
+            type="button"
+            data-language-toggle
+            aria-label="Switch language"
+            onClick={click(() => setLang(lang === "en" ? "ar" : "en"))}
+            className="btn-language"
+          >
+            🌐 LANGUAGE: <span>{lang === "en" ? "EN" : "AR"}</span> / {t.lang}
+          </button>
+        </div>
+      )}
+
       {screen === "play" && g && (
         <div className="absolute top-0 left-0 right-0 p-3 flex items-start justify-between pointer-events-none">
           <div className="space-y-2 pointer-events-auto sg-panel px-3 py-2">
@@ -168,10 +182,7 @@ export default function StraitGuardGame() {
             className="w-[min(90vw,520px)] rounded-2xl shadow-2xl ring-1 ring-cyan-400/30" />
           <p className="sg-tagline">{t.tagline}</p>
           <button onClick={click(() => setScreen("levels"))} className="btn-primary">{t.start}</button>
-          <div className="flex gap-2 mt-2">
-            <button onClick={click(() => setLang(lang === "en" ? "ar" : "en"))} className="btn-ghost">
-              🌐 {t.lang}
-            </button>
+          <div className="flex gap-2 mt-2 flex-wrap justify-center">
             <button onClick={click(() => setMuted(!muted))} className="btn-ghost">
               {muted ? "🔇" : "🔊"} {t.sound}: {muted ? t.off : t.on}
             </button>
@@ -249,6 +260,24 @@ export default function StraitGuardGame() {
           backdrop-filter: blur(6px);
         }
         .btn-ghost:hover{ border-color: rgba(120,220,255,.7); color:#fff; }
+        .btn-language {
+          color:#07141f;
+          padding:11px 16px;
+          border-radius:4px;
+          background: linear-gradient(180deg,#dffaff 0%,#79d8ff 44%,#1f7aa3 58%,#bfeaff 100%);
+          border:1px solid rgba(210,250,255,.9);
+          letter-spacing:.1em;
+          font-size:12px;
+          font-weight:900;
+          box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 22px rgba(80,200,255,.58), inset 0 1px 0 rgba(255,255,255,.8);
+          clip-path: polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
+          text-shadow:0 1px 0 rgba(255,255,255,.45);
+        }
+        .btn-language span{ color:#001d2c; }
+        .btn-language:hover{ filter:brightness(1.08); }
+        @media (max-width: 520px) {
+          .btn-language { font-size:10px; padding:9px 12px; letter-spacing:.06em; }
+        }
         .sg-panel {
           background: linear-gradient(180deg, rgba(10,22,34,.78), rgba(6,14,22,.78));
           border:1px solid rgba(120,220,255,.28);
