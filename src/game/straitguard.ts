@@ -1,5 +1,5 @@
 // StraitGuard - modular game logic, structured for easy Unity port.
-// Each class mirrors a Unity MonoBehaviour-like component.
+import { audio } from "./audio";
 
 export type Vec2 = { x: number; y: number };
 
@@ -55,15 +55,13 @@ export class Ship {
 
 export class PlayerShipController extends Ship {
   fireCooldown = 0;
-  fireRate = 0.18; // seconds
+  fireRate = 0.18;
   target: Vec2 | null = null;
   speed = 380;
-  constructor(pos: Vec2) {
-    super(pos, { x: 34, y: 46 }, 100);
+  constructor(pos: Vec2, hp = 100) {
+    super(pos, { x: 34, y: 46 }, hp);
   }
-  setTarget(p: Vec2 | null) {
-    this.target = p;
-  }
+  setTarget(p: Vec2 | null) { this.target = p; }
   update(dt: number, bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
     if (this.target) {
       const dx = this.target.x - this.pos.x;
@@ -82,12 +80,13 @@ export class PlayerShipController extends Ship {
   tryFire(): Bullet | null {
     if (this.fireCooldown > 0) return null;
     this.fireCooldown = this.fireRate;
+    audio.play("fire");
     return new Bullet({ x: this.pos.x, y: this.pos.y - this.size.y / 2 }, { x: 0, y: -560 }, 10, "player");
   }
 }
 
 export class CargoShipController extends Ship {
-  speed = 28; // upward (toward end)
+  speed = 28;
   constructor(pos: Vec2) {
     super(pos, { x: 60, y: 90 }, 300);
   }
@@ -102,29 +101,29 @@ export class EnemyController extends Ship {
   speed: number;
   bulletDamage: number;
   color: string;
-  constructor(public kind: EnemyKind, pos: Vec2, public fromSide: "left" | "right") {
+  constructor(public kind: EnemyKind, pos: Vec2, public fromSide: "left" | "right", damageMul = 1, speedMul = 1) {
     let hp = 20, size = { x: 30, y: 30 }, fireRate = 1.6, speed = 60, dmg = 6, color = "#c44";
     if (kind === "fast") { hp = 14; size = { x: 26, y: 26 }; fireRate = 1.4; speed = 130; dmg = 5; color = "#e8a"; }
     if (kind === "heavy") { hp = 60; size = { x: 42, y: 42 }; fireRate = 2.2; speed = 35; dmg = 14; color = "#933"; }
     super(pos, size, hp);
     this.fireRate = fireRate;
     this.fireCooldown = Math.random() * fireRate;
-    this.speed = speed;
-    this.bulletDamage = dmg;
+    this.speed = speed * speedMul;
+    this.bulletDamage = dmg * damageMul;
     this.color = color;
   }
-  update(dt: number, target: Vec2): Bullet | null {
+  update(dt: number, target: Vec2, maxY: number): Bullet | null {
     const dx = target.x - this.pos.x;
     const dy = target.y - this.pos.y;
     const d = Math.hypot(dx, dy) || 1;
-    // approach but keep some distance
     if (d > 160) {
       this.pos.x += (dx / d) * this.speed * dt;
       this.pos.y += (dy / d) * this.speed * dt;
     } else {
-      // strafe a bit toward target axis
       this.pos.y += (dy / d) * this.speed * 0.4 * dt;
     }
+    // Clamp: enemies must stay in front of (above) the player's firing line.
+    if (this.pos.y > maxY) this.pos.y = maxY;
     this.fireCooldown -= dt;
     if (this.fireCooldown <= 0) {
       this.fireCooldown = this.fireRate;
@@ -145,13 +144,16 @@ export interface LevelSettings {
   maxEnemies: number;
   weights: Record<EnemyKind, number>;
   cargoSpeed: number;
-  durationPx: number; // how far cargo must travel up
+  durationPx: number;
+  playerHp: number;
+  enemyDamageMul: number;
+  enemySpeedMul: number;
 }
 
 export const LEVELS: Record<1 | 2 | 3, LevelSettings> = {
-  1: { spawnInterval: [2.0, 3.2], maxEnemies: 5, weights: { basic: 0.8, fast: 0.2, heavy: 0 }, cargoSpeed: 26, durationPx: 4200 },
-  2: { spawnInterval: [1.1, 2.0], maxEnemies: 9, weights: { basic: 0.55, fast: 0.35, heavy: 0.1 }, cargoSpeed: 32, durationPx: 5400 },
-  3: { spawnInterval: [0.6, 1.2], maxEnemies: 14, weights: { basic: 0.4, fast: 0.35, heavy: 0.25 }, cargoSpeed: 38, durationPx: 6600 },
+  1: { spawnInterval: [2.8, 4.2], maxEnemies: 3, weights: { basic: 1, fast: 0, heavy: 0 }, cargoSpeed: 22, durationPx: 3600, playerHp: 150, enemyDamageMul: 0.7, enemySpeedMul: 0.8 },
+  2: { spawnInterval: [1.4, 2.4], maxEnemies: 7, weights: { basic: 0.55, fast: 0.35, heavy: 0.1 }, cargoSpeed: 30, durationPx: 5200, playerHp: 110, enemyDamageMul: 1.0, enemySpeedMul: 1.0 },
+  3: { spawnInterval: [0.5, 1.0], maxEnemies: 14, weights: { basic: 0.3, fast: 0.4, heavy: 0.3 }, cargoSpeed: 40, durationPx: 7000, playerHp: 90, enemyDamageMul: 1.4, enemySpeedMul: 1.3 },
 };
 
 export class EnemySpawner {
@@ -174,8 +176,9 @@ export class EnemySpawner {
     this.timer = a + Math.random() * (b - a);
     const side: "left" | "right" = Math.random() < 0.5 ? "left" : "right";
     const x = side === "left" ? 20 : width - 20;
-    const y = cargoY + (Math.random() * 600 - 200);
-    return new EnemyController(this.pickKind(), { x, y }, side);
+    // Spawn ABOVE the cargo so enemies approach from in front, never from behind.
+    const y = cargoY - 200 - Math.random() * 400;
+    return new EnemyController(this.pickKind(), { x, y }, side, this.settings.enemyDamageMul, this.settings.enemySpeedMul);
   }
 }
 
@@ -193,7 +196,6 @@ export class GameManager {
   height: number;
   cargoStartY = 0;
   travelled = 0;
-  // camera follows cargo's progress
   cameraY = 0;
 
   constructor(cfg: GameConfig) {
@@ -209,7 +211,7 @@ export class GameManager {
     this.cargo = new CargoShipController({ x: this.width / 2, y: this.height - 120 });
     this.cargo.speed = settings.cargoSpeed;
     this.cargoStartY = this.cargo.pos.y;
-    this.player = new PlayerShipController({ x: this.width / 2, y: this.height - 220 });
+    this.player = new PlayerShipController({ x: this.width / 2, y: this.height - 220 }, settings.playerHp);
     this.enemies = [];
     this.bullets = [];
     this.travelled = 0;
@@ -217,11 +219,7 @@ export class GameManager {
     this.status = "playing";
   }
 
-  resize(w: number, h: number) {
-    this.width = w;
-    this.height = h;
-  }
-
+  resize(w: number, h: number) { this.width = w; this.height = h; }
   pause() { if (this.status === "playing") this.status = "paused"; }
   resume() { if (this.status === "paused") this.status = "playing"; }
 
@@ -229,12 +227,10 @@ export class GameManager {
     if (this.status !== "playing") return;
     const settings = LEVELS[this.level];
 
-    // cargo moves up in world; we keep cargo on screen by moving camera
     this.cargo.update(dt);
     const desiredCargoScreenY = this.height - 140;
     const shift = desiredCargoScreenY - this.cargo.pos.y;
     if (shift > 0) {
-      // move world down so cargo stays put
       this.cargo.pos.y += shift;
       this.player.pos.y += shift;
       for (const e of this.enemies) e.pos.y += shift;
@@ -243,7 +239,6 @@ export class GameManager {
       this.travelled += shift;
     }
 
-    // player
     this.player.update(dt, {
       minX: 60, maxX: this.width - 60,
       minY: 40, maxY: this.height - 40,
@@ -251,27 +246,32 @@ export class GameManager {
     const pb = this.player.tryFire();
     if (pb) this.bullets.push(pb);
 
-    // spawn
     const ne = this.spawner.update(dt, this.enemies.length, this.width, this.cargo.pos.y);
     if (ne) this.enemies.push(ne);
 
-    // enemies
+    // Enemy firing line: never below the player's bow (turret).
+    const enemyMaxY = this.player.pos.y - this.player.size.y / 2 - 10;
+
     for (const e of this.enemies) {
       const target = Math.random() < 0.4 ? this.player.pos : this.cargo.pos;
-      const eb = e.update(dt, target);
+      const eb = e.update(dt, target, enemyMaxY);
       if (eb) this.bullets.push(eb);
     }
 
-    // bullets
     for (const b of this.bullets) {
       b.update(dt);
       if (b.from === "player") {
         for (const e of this.enemies) {
-          if (e.alive && e.hits(b)) { e.damage(b.damage); b.alive = false; break; }
+          if (e.alive && e.hits(b)) {
+            e.damage(b.damage); b.alive = false;
+            if (!e.alive) audio.play("explosion");
+            else audio.play("hit");
+            break;
+          }
         }
       } else {
-        if (this.player.hits(b)) { this.player.damage(b.damage); b.alive = false; }
-        else if (this.cargo.hits(b)) { this.cargo.damage(b.damage); b.alive = false; }
+        if (this.player.hits(b)) { this.player.damage(b.damage); b.alive = false; audio.play("hit"); }
+        else if (this.cargo.hits(b)) { this.cargo.damage(b.damage); b.alive = false; audio.play("hit"); }
       }
       if (b.pos.x < -20 || b.pos.x > this.width + 20 || b.pos.y < -40 || b.pos.y > this.height + 40) {
         b.alive = false;
@@ -280,9 +280,8 @@ export class GameManager {
     this.bullets = this.bullets.filter((b) => b.alive);
     this.enemies = this.enemies.filter((e) => e.alive && e.pos.y < this.height + 80);
 
-    // win/lose
-    if (!this.cargo.alive || !this.player.alive) this.status = "lose";
-    else if (this.travelled >= settings.durationPx) this.status = "win";
+    if (!this.cargo.alive || !this.player.alive) { this.status = "lose"; audio.play("lose"); audio.stopMusic(); }
+    else if (this.travelled >= settings.durationPx) { this.status = "win"; audio.play("win"); audio.stopMusic(); }
   }
 
   progress(): number {
