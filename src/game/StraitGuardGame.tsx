@@ -321,12 +321,12 @@ function SgTitle({ children, accent = "silver" }: { children: React.ReactNode; a
 
 function HpBar({ label, value }: { label: string; value: number }) {
   return (
-    <div className="w-48">
-      <div className="flex justify-between text-[10px] tracking-[0.25em] text-cyan-100/80 mb-0.5 font-bold">
-        <span>{label}</span>
+    <div className="w-32 sm:w-44 md:w-48">
+      <div className="flex justify-between text-[9px] sm:text-[10px] tracking-[0.2em] text-cyan-100/80 mb-0.5 font-bold">
+        <span className="truncate">{label}</span>
         <span className="font-mono opacity-70">{String(Math.floor(value * 100)).padStart(3, "0")}</span>
       </div>
-      <div className="h-2 w-full bg-black/70 overflow-hidden border border-cyan-400/30 shadow-[inset_0_0_6px_rgba(0,0,0,0.8)]">
+      <div className="h-1.5 sm:h-2 w-full bg-black/70 overflow-hidden border border-cyan-400/30 shadow-[inset_0_0_6px_rgba(0,0,0,0.8)]">
         <div className="h-full transition-[width] duration-150"
           style={{ width: `${Math.max(0, value) * 100}%`,
             background: "linear-gradient(90deg,#ffb648 0%,#ff6a1f 60%,#ff2e2e 100%)",
