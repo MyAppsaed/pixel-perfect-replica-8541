@@ -1,5 +1,11 @@
 import type { GameManager, EnemyController } from "./straitguard";
 
+// Deterministic pseudo-random for scenery placement (stable per world-Y).
+function hash(n: number): number {
+  const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
 export function render(ctx: CanvasRenderingContext2D, g: GameManager) {
   const { width: W, height: H } = g;
 
@@ -18,19 +24,32 @@ export function render(ctx: CanvasRenderingContext2D, g: GameManager) {
     ctx.fillRect(120, y, W - 240, stripeH);
   }
 
-  // land left/right (rocky cliffs)
+  // land left/right (sandy beach + grass)
   const landW = 110;
+  // base earth
   ctx.fillStyle = "#3b2a1c";
   ctx.fillRect(0, 0, landW, H);
   ctx.fillRect(W - landW, 0, landW, H);
-  ctx.fillStyle = "#5a4530";
-  // jagged edge
-  for (let y = 0; y < H; y += 30) {
-    const jitterL = ((Math.sin((y + g.cameraY) * 0.05) + 1) / 2) * 14;
-    const jitterR = ((Math.cos((y + g.cameraY) * 0.05) + 1) / 2) * 14;
-    ctx.fillRect(landW - jitterL, y, jitterL, 30);
-    ctx.fillRect(W - landW, y, jitterR, 30);
+  // grass interior
+  ctx.fillStyle = "#3a5a2a";
+  ctx.fillRect(0, 0, landW - 22, H);
+  ctx.fillRect(W - landW + 22, 0, landW - 22, H);
+  // sandy beach strip near water
+  ctx.fillStyle = "#c9b178";
+  ctx.fillRect(landW - 22, 0, 14, H);
+  ctx.fillRect(W - landW + 8, 0, 14, H);
+
+  // jagged shoreline
+  ctx.fillStyle = "#0d4666";
+  for (let y = 0; y < H; y += 12) {
+    const jL = ((Math.sin((y + g.cameraY) * 0.07) + 1) / 2) * 8;
+    const jR = ((Math.cos((y + g.cameraY) * 0.07) + 1) / 2) * 8;
+    ctx.fillRect(landW - 8, y, jL, 12);
+    ctx.fillRect(W - landW + 8 - jR, y, jR, 12);
   }
+
+  // scrolling scenery (trees, rocks, buildings) — keyed to world-Y so they scroll with the map
+  drawScenery(ctx, g.cameraY, H, landW, W);
 
   // progress bar at top
   const prog = g.progress();
@@ -38,6 +57,15 @@ export function render(ctx: CanvasRenderingContext2D, g: GameManager) {
   ctx.fillRect(landW, 14, W - landW * 2, 4);
   ctx.fillStyle = `rgba(255,200,60,0.95)`;
   ctx.fillRect(landW, 14, (W - landW * 2) * prog, 4);
+
+  // FINISH LINE — safe harbor marker appears as cargo nears its destination
+  if (prog > 0.82) {
+    const finishWorldY = -200; // world-Y of finish line (above start)
+    const finishScreenY = finishWorldY + g.cameraY;
+    if (finishScreenY > -40 && finishScreenY < H) {
+      drawFinishLine(ctx, finishScreenY, landW, W, Math.min(1, (prog - 0.82) / 0.18));
+    }
+  }
 
   // wake behind cargo
   drawWake(ctx, g.cargo.pos.x, g.cargo.pos.y + g.cargo.size.y / 2, g.cargo.size.x * 0.8, 80);
